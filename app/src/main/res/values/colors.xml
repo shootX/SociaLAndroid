@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="canvas">#F6F5F2</color>
+    <color name="surface">#FFFDFA</color>
+    <color name="ink">#1C1B19</color>
+    <color name="gray">#8A867C</color>
+    <color name="line">#E3E0D8</color>
+    <color name="icon_start">#6D85FF</color>
+    <color name="icon_end">#4F4FF0</color>
+</resources>

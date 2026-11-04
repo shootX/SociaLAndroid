@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="canvas">#121211</color>
+    <color name="surface">#1C1C1A</color>
+    <color name="ink">#F3F1EB</color>
+    <color name="gray">#9C978C</color>
+    <color name="line">#2C2B28</color>
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_save"
+        android:shortcutId="save_copied_link"
+        android:shortcutLongLabel="@string/intent_save_copied_title"
+        android:shortcutShortLabel="@string/intent_save_copied_short">
+        <intent
+            android:action="com.shoto.socialsave.SAVE_COPIED_LINK"
+            android:targetClass="com.shoto.socialsave.share.ClipboardSaveActivity"
+            android:targetPackage="com.shoto.socialsave" />
+    </shortcut>
+</shortcuts>

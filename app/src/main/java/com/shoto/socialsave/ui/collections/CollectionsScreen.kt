@@ -101,8 +101,8 @@ private data class Tile(
 fun CollectionsScreen(onOpen: (CollectionKind) -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
-    val posts by repository.observePosts().collectAsStateWithLifecycle(initialValue = emptyList())
-    val categories by repository.observeCategories().collectAsStateWithLifecycle(initialValue = emptyList())
+    val posts by remember { repository.observePosts() }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val c = Brand.colors
 
     var editorOpen by rememberSaveable { mutableStateOf(false) }

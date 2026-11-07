@@ -113,8 +113,8 @@ fun LibraryScreen(
     val scope = rememberCoroutineScope()
     val c = Brand.colors
 
-    val posts by repository.observePosts().collectAsStateWithLifecycle(initialValue = null)
-    val categories by repository.observeCategories().collectAsStateWithLifecycle(initialValue = emptyList())
+    val posts by remember { repository.observePosts() }.collectAsStateWithLifecycle(initialValue = null)
+    val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val newestFirst by container.settings.newestFirst.collectAsStateWithLifecycle()
 
     var searchVisible by rememberSaveable { mutableStateOf(false) }

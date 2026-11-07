@@ -67,5 +67,6 @@ class LinkMetadataFetcherTest {
         assertEquals(true, ShortLinkExpander.isShortLink("https://vm.tiktok.com/ZM1"))
         assertEquals(true, ShortLinkExpander.isShortLink("https://www.tiktok.com/t/ZT1"))
         assertEquals(false, ShortLinkExpander.isShortLink("https://www.tiktok.com/@a/video/1"))
+        assertEquals(false, ShortLinkExpander.isShortLink("https://youtu.be/dQw4w9WgXcQ"))
     }
 }

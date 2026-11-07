@@ -99,9 +99,10 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     var timeDialog by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canNotify = ReminderScheduler.canNotify(context) }
 
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+    // Keep reminders on even when denied, so the "blocked" footer and the open-settings row explain how to fix it.
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         canNotify = ReminderScheduler.canNotify(context)
-        settings.setRemindersEnabled(granted)
+        settings.setRemindersEnabled(true)
         container.rescheduleReminder()
     }
     val blocked = remindersEnabled && !canNotify

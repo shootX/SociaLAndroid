@@ -18,11 +18,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.shoto.socialsave"
+    namespace = "com.ich.socialsave"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.shoto.socialsave"
+        applicationId = "com.ich.socialsave"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

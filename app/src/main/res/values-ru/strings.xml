@@ -196,4 +196,5 @@
     <string name="account_delete_confirm_title">Удалить аккаунт?</string>
     <string name="account_delete_confirm_body">Аккаунт и все сохранения на сервере будут удалены навсегда. С этого телефона тоже.</string>
     <string name="account_delete_confirm_action">Удалить</string>
+    <string name="account_delete_failed">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
 </resources>

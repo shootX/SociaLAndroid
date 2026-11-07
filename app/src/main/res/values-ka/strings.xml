@@ -196,4 +196,5 @@
     <string name="account_delete_confirm_title">წავშალოთ ანგარიში?</string>
     <string name="account_delete_confirm_body">ეს სამუდამოდ წაშლის ანგარიშს და სერვერზე შენახულ ყველა ბმულს. ამ ტელეფონიდანაც წაიშლება.</string>
     <string name="account_delete_confirm_action">წაშლა</string>
+    <string name="account_delete_failed">ანგარიშის წაშლა ვერ მოხერხდა. შეამოწმეთ ინტერნეტი და სცადეთ თავიდან.</string>
 </resources>

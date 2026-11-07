@@ -38,8 +38,14 @@ class ApiClient(
     suspend fun signInWithFacebook(accessToken: String, deviceName: String): SessionPayload =
         session(post("auth/facebook", JSONObject().put("access_token", accessToken).put("device_name", deviceName), auth = false))
 
-    suspend fun exchangeAppleCode(code: String, deviceName: String): SessionPayload =
-        session(post("auth/apple/exchange", JSONObject().put("code", code).put("device_name", deviceName), auth = false))
+    suspend fun exchangeAppleCode(code: String, codeVerifier: String, deviceName: String): SessionPayload =
+        session(
+            post(
+                "auth/apple/exchange",
+                JSONObject().put("code", code).put("code_verifier", codeVerifier).put("device_name", deviceName),
+                auth = false,
+            ),
+        )
 
     suspend fun refresh(): SessionPayload = session(post("auth/refresh", null))
 
@@ -54,8 +60,12 @@ class ApiClient(
     suspend fun sync(body: JSONObject): JSONObject =
         post("sync", body) as? JSONObject ?: throw JSONException("sync: missing data")
 
-    /** `GET {API}/auth/apple/start?state=…` — opened in a Custom Tab, never fetched by the app. */
-    fun appleStartUrl(state: String): String = "$base/auth/apple/start?state=$state"
+    /**
+     * `GET {API}/auth/apple/start?state=…&code_challenge=…&code_challenge_method=S256` — opened in a Custom Tab,
+     * never fetched by the app. Both values are base64url, so they need no escaping.
+     */
+    fun appleStartUrl(state: String, codeChallenge: String): String =
+        "$base/auth/apple/start?state=$state&code_challenge=$codeChallenge&code_challenge_method=S256"
 
     private suspend fun post(path: String, body: JSONObject?, auth: Boolean = true): Any? =
         call("POST", path, body, auth)

@@ -8,8 +8,8 @@ import com.shoto.socialsave.ui.MainActivity
 
 /**
  * Receives `socialsave://auth/apple?code=…&state=…` (or `?error=…`) from the server at the end of the
- * Apple web flow, hands it to [AccountSession.completeApple] (which checks `state`), then closes the
- * Custom Tab by bringing the app back to the front.
+ * Apple web flow, hands it to [AccountSession.completeApple] (which checks `state` and redeems the code with
+ * the PKCE `code_verifier`), then closes the Custom Tab by bringing the app back to the front.
  */
 class AppleAuthActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

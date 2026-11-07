@@ -1,6 +1,5 @@
 package com.shoto.socialsave.account
 
-import android.util.Base64
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +11,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONException
 import java.io.IOException
-import java.security.SecureRandom
 
 enum class SignInStatus { IDLE, WORKING, FAILED }
 
@@ -61,24 +59,24 @@ class AccountSession(
 
     /** Starts the Apple web flow: returns the URL to open in a Custom Tab. */
     fun appleStartUrl(): String {
-        val bytes = ByteArray(32).also(SecureRandom()::nextBytes)
-        val state = Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_PADDING or Base64.NO_WRAP)
-        store.setPendingAppleState(state, clock())
+        val state = Pkce.randomToken()
+        val codeVerifier = Pkce.randomToken()
+        store.setPendingApple(state, codeVerifier, clock())
         clearSignInError()
-        return api.appleStartUrl(state)
+        return api.appleStartUrl(state, Pkce.challengeFor(codeVerifier))
     }
 
     /** `socialsave://auth/apple?code=…&state=…` or `?error=…&state=…` came back from the server. */
     fun completeApple(code: String?, state: String?, error: String?) {
-        val expected = store.takePendingAppleState(clock(), APPLE_STATE_MAX_AGE)
+        val pending = store.takePendingApple(clock(), APPLE_STATE_MAX_AGE)
         when {
             // Not a flow we started (or a stale one): ignore it without showing an error.
-            expected == null -> Log.w(TAG, "Apple callback without a pending sign-in")
-            state != expected || error != null || code.isNullOrEmpty() -> {
+            pending == null -> Log.w(TAG, "Apple callback without a pending sign-in")
+            state != pending.state || error != null || code.isNullOrEmpty() -> {
                 Log.w(TAG, "Apple sign-in failed: ${error ?: "state mismatch or missing code"}")
                 _signIn.value = SignInStatus.FAILED
             }
-            else -> launchSignIn { api.exchangeAppleCode(code, deviceName) }
+            else -> launchSignIn { api.exchangeAppleCode(code, pending.codeVerifier, deviceName) }
         }
     }
 

@@ -124,11 +124,15 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
         }
     }
 
+    // On failure the account and the library stay; the dialog says so and offers another try.
     fun deleteAccount() {
         accountBusy = true
         container.scope.launch {
-            container.account.deleteAccount()
-            withContext(Dispatchers.Main) { accountBusy = false }
+            val deleted = container.account.deleteAccount()
+            withContext(Dispatchers.Main) {
+                accountBusy = false
+                if (!deleted) accountDialog = AccountDialog.DELETE_FAILED
+            }
         }
     }
 
@@ -316,6 +320,13 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 destructive = true,
                 onDismiss = dismiss,
             ) { deleteAccount() }
+            AccountDialog.DELETE_FAILED -> ConfirmDialog(
+                title = stringResource(R.string.account_delete_confirm_title),
+                body = stringResource(R.string.account_delete_failed),
+                confirm = stringResource(R.string.account_delete_confirm_action),
+                destructive = true,
+                onDismiss = dismiss,
+            ) { deleteAccount() }
         }
     }
 
@@ -407,7 +418,7 @@ private fun LinkRow(title: String, enabled: Boolean = true, color: Color = Brand
     )
 }
 
-private enum class AccountDialog { SIGN_OUT, UNSYNCED, DELETE }
+private enum class AccountDialog { SIGN_OUT, UNSYNCED, DELETE, DELETE_FAILED }
 
 @Composable
 private fun accountStatusText(state: AccountState.SignedIn, sync: SyncStatus, busy: Boolean): String {

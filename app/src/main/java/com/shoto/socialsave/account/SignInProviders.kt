@@ -71,7 +71,7 @@ object FacebookSignIn {
 }
 
 object AppleSignIn {
-    /** Opens `{API}/auth/apple/start?state=…` in a Custom Tab; the answer comes back to [AppleAuthActivity]. */
+    /** Opens `{API}/auth/apple/start?state=…&code_challenge=…` in a Custom Tab; the answer comes back to [AppleAuthActivity]. */
     fun start(context: Context, url: String): Boolean = runCatching {
         CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, Uri.parse(url))
     }.isSuccess

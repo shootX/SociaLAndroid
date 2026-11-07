@@ -15,6 +15,9 @@ sealed interface AccountState {
     data class SignedIn(val user: AccountUser, val expired: Boolean) : AccountState
 }
 
+/** The `state` and PKCE `code_verifier` of an Apple web flow the app started. */
+data class PendingAppleSignIn(val state: String, val codeVerifier: String)
+
 data class SyncStatus(val running: Boolean = false, val lastSyncedAt: Long? = null, val failed: Boolean = false)
 
 /** Where the sync engine keeps the server's opaque cursor. */
@@ -88,23 +91,30 @@ class AccountStore(context: Context) : SyncCursorStore {
         )
     }
 
-    /** Remembers the `state` sent to the Apple web flow so the deep link can be checked against it. */
-    fun setPendingAppleState(state: String, at: Long) {
+    /**
+     * Remembers the `state` sent to the Apple web flow, so the deep link can be checked against it, and the
+     * PKCE `code_verifier` that redeems the one-time code.
+     */
+    fun setPendingApple(state: String, codeVerifier: String, at: Long) {
         prefs.edit(commit = true) {
             putString(KEY_APPLE_STATE, state)
+            putString(KEY_APPLE_CODE_VERIFIER, codeVerifier)
             putLong(KEY_APPLE_STATE_AT, at)
         }
     }
 
-    /** Returns and forgets the pending Apple state, or null when there is none or it is older than [maxAgeMillis]. */
-    fun takePendingAppleState(now: Long, maxAgeMillis: Long): String? {
+    /** Returns and forgets the pending Apple sign-in, or null when there is none or it is older than [maxAgeMillis]. */
+    fun takePendingApple(now: Long, maxAgeMillis: Long): PendingAppleSignIn? {
         val state = prefs.getString(KEY_APPLE_STATE, null)
+        val codeVerifier = prefs.getString(KEY_APPLE_CODE_VERIFIER, null)
         val at = prefs.getLong(KEY_APPLE_STATE_AT, 0L)
         prefs.edit(commit = true) {
             remove(KEY_APPLE_STATE)
+            remove(KEY_APPLE_CODE_VERIFIER)
             remove(KEY_APPLE_STATE_AT)
         }
-        return state?.takeIf { now - at in 0..maxAgeMillis }
+        if (state == null || codeVerifier == null || now - at !in 0..maxAgeMillis) return null
+        return PendingAppleSignIn(state, codeVerifier)
     }
 
     /** Signs out: token, user, cursor and sync state are all forgotten. */
@@ -140,6 +150,7 @@ class AccountStore(context: Context) : SyncCursorStore {
         const val KEY_LAST_SYNCED = "sync.lastSyncedAt"
         const val KEY_SYNC_FAILED = "sync.failed"
         const val KEY_APPLE_STATE = "apple.state"
+        const val KEY_APPLE_CODE_VERIFIER = "apple.codeVerifier"
         const val KEY_APPLE_STATE_AT = "apple.stateAt"
     }
 }

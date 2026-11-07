@@ -7,8 +7,8 @@
         android:shortcutLongLabel="@string/intent_save_copied_title"
         android:shortcutShortLabel="@string/intent_save_copied_short">
         <intent
-            android:action="com.shoto.socialsave.SAVE_COPIED_LINK"
-            android:targetClass="com.shoto.socialsave.share.ClipboardSaveActivity"
-            android:targetPackage="com.shoto.socialsave" />
+            android:action="com.ich.socialsave.SAVE_COPIED_LINK"
+            android:targetClass="com.ich.socialsave.share.ClipboardSaveActivity"
+            android:targetPackage="com.ich.socialsave" />
     </shortcut>
 </shortcuts>

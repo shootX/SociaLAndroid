@@ -76,7 +76,7 @@
             android:taskAffinity=""
             android:theme="@style/Theme.SocialSave.Invisible">
             <intent-filter>
-                <action android:name="com.shoto.socialsave.SAVE_COPIED_LINK" />
+                <action android:name="com.ich.socialsave.SAVE_COPIED_LINK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

@@ -51,11 +51,11 @@ Values are read from a Gradle property (`-P`, `~/.gradle/gradle.properties`) or 
 Provider setup outside the code:
 
 * **Google:** in the same Google Cloud project as the web client, create an **Android** OAuth client for
-  package `com.shoto.socialsave` with the SHA-1 of every signing key in use: the debug keystore, the
+  package `com.ich.socialsave` with the SHA-1 of every signing key in use: the debug keystore, the
   upload/release key and the Play App Signing key (Play Console → App integrity). Without a matching
   Android client, Credential Manager returns no Google account.
-* **Facebook:** in the Facebook app, add the Android platform with package `com.shoto.socialsave`, class
-  `com.shoto.socialsave.ui.MainActivity`, and the key hash of each signing key
+* **Facebook:** in the Facebook app, add the Android platform with package `com.ich.socialsave`, class
+  `com.ich.socialsave.ui.MainActivity`, and the key hash of each signing key
   (`keytool -exportcert -alias <alias> -keystore <keystore> | openssl sha1 -binary | openssl base64`;
   for Play App Signing, convert the SHA-1 from Play Console to base64).
 * **Apple:** nothing on the device; Sign in with Apple runs as a web flow through the API, which returns to

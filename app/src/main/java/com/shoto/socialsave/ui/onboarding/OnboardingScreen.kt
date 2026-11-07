@@ -32,13 +32,17 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,40 +54,66 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shoto.socialsave.R
+import com.shoto.socialsave.account.AccountState
+import com.shoto.socialsave.account.SignInStatus
 import com.shoto.socialsave.container
+import com.shoto.socialsave.ui.account.NotNowLabel
+import com.shoto.socialsave.ui.account.SignInHeadline
+import com.shoto.socialsave.ui.account.SignInOptions
 import com.shoto.socialsave.ui.components.CategoryPalette
 import com.shoto.socialsave.ui.components.PrimaryButton
 import com.shoto.socialsave.ui.theme.Brand
 import com.shoto.socialsave.work.ReminderScheduler
 import kotlinx.coroutines.launch
 
-private enum class Illustration { SHARE, COLLECTIONS, REMINDER }
+private enum class Illustration { SHARE, COLLECTIONS, REMINDER, ACCOUNT }
 
 private data class Page(val title: Int, val body: Int, val illustration: Illustration)
 
-private val pages = listOf(
+private val basePages = listOf(
     Page(R.string.onboarding_share_title, R.string.onboarding_share_body, Illustration.SHARE),
     Page(R.string.onboarding_organize_title, R.string.onboarding_organize_body, Illustration.COLLECTIONS),
     Page(R.string.onboarding_remind_title, R.string.onboarding_remind_body, Illustration.REMINDER),
 )
 
-/** First-launch walkthrough: saving from the share sheet, organizing, and the weekly reminder. */
+/** Optional sign-in, last; shown only while signed out. */
+private val accountPage = Page(R.string.sign_in_title, R.string.sign_in_subtitle, Illustration.ACCOUNT)
+
+/** First-launch walkthrough: saving from the share sheet, organizing, the weekly reminder, then sign-in. */
 @Composable
 fun OnboardingScreen(onFinish: () -> Unit) {
     val context = LocalContext.current
     val container = context.container
     val c = Brand.colors
+    // Fixed for this run, so signing in on the last page doesn't change the page count under the pager.
+    val pages = remember {
+        if (container.account.state.value == AccountState.SignedOut) basePages + accountPage else basePages
+    }
     val pager = rememberPagerState { pages.size }
     val scope = rememberCoroutineScope()
     val isLast = pager.currentPage == pages.lastIndex
+    val page = pages[pager.currentPage]
+
+    val signInStatus by container.account.signInStatus.collectAsStateWithLifecycle()
+
+    fun next() {
+        if (isLast) onFinish() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+    }
+
+    // With the sign-in page in the pager, Skip jumps to it (it has its own "Not now"), like iOS.
+    fun skip() {
+        if (pages.last() == accountPage) scope.launch { pager.animateScrollToPage(pages.lastIndex) } else onFinish()
+    }
 
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         container.settings.setRemindersEnabled(granted)
         container.rescheduleReminder()
-        onFinish()
+        next()
     }
 
     fun turnOnReminders() {
@@ -92,7 +122,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
         } else {
             container.settings.setRemindersEnabled(true)
             container.rescheduleReminder()
-            onFinish()
+            next()
         }
     }
 
@@ -104,26 +134,32 @@ fun OnboardingScreen(onFinish: () -> Unit) {
         Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
             if (!isLast) {
-                TextButton(onClick = onFinish) {
+                TextButton(onClick = ::skip) {
                     Text(stringResource(R.string.onboarding_skip), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 }
             }
         }
         HorizontalPager(state = pager, modifier = Modifier.weight(1f)) { index ->
-            val page = pages[index]
+            val shown = pages[index]
             Column(Modifier.fillMaxSize().padding(horizontal = 28.dp)) {
                 Spacer(Modifier.weight(0.2f))
-                Box(Modifier.fillMaxWidth().height(300.dp), contentAlignment = Alignment.Center) {
-                    when (page.illustration) {
+                val illustrationHeight = if (shown.illustration == Illustration.ACCOUNT) 160.dp else 300.dp
+                Box(Modifier.fillMaxWidth().height(illustrationHeight), contentAlignment = Alignment.Center) {
+                    when (shown.illustration) {
                         Illustration.SHARE -> ShareIllustration()
                         Illustration.COLLECTIONS -> CollectionsIllustration()
                         Illustration.REMINDER -> ReminderIllustration()
+                        Illustration.ACCOUNT -> AccountIllustration()
                     }
                 }
                 Spacer(Modifier.weight(0.2f))
-                Text(stringResource(page.title), color = c.ink, fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp, lineHeight = 36.sp)
-                Spacer(Modifier.height(10.dp))
-                Text(stringResource(page.body), color = c.gray, fontSize = 17.sp, lineHeight = 23.sp)
+                if (shown.illustration == Illustration.ACCOUNT) {
+                    SignInHeadline(TextAlign.Start, titleSize = 30)
+                } else {
+                    Text(stringResource(shown.title), color = c.ink, fontSize = 30.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp, lineHeight = 36.sp)
+                    Spacer(Modifier.height(10.dp))
+                    Text(stringResource(shown.body), color = c.gray, fontSize = 17.sp, lineHeight = 23.sp)
+                }
                 Spacer(Modifier.weight(0.2f))
             }
         }
@@ -136,19 +172,26 @@ fun OnboardingScreen(onFinish: () -> Unit) {
                 )
             }
         }
-        PrimaryButton(
-            stringResource(if (isLast) R.string.onboarding_start else R.string.onboarding_next),
-            onClick = {
-                if (isLast) turnOnReminders() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
-            },
-            modifier = Modifier.padding(horizontal = 24.dp),
-        )
-        TextButton(
-            onClick = onFinish,
-            enabled = isLast,
-            modifier = Modifier.fillMaxWidth().alpha(if (isLast) 1f else 0f).padding(bottom = 4.dp),
-        ) {
-            Text(stringResource(R.string.onboarding_no_reminders), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        if (page.illustration == Illustration.ACCOUNT) {
+            SignInOptions(onSignedIn = onFinish, modifier = Modifier.padding(horizontal = 24.dp))
+            val notNowEnabled = signInStatus != SignInStatus.WORKING
+            TextButton(onClick = onFinish, enabled = notNowEnabled, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+                NotNowLabel(notNowEnabled)
+            }
+        } else {
+            val reminderPage = page.illustration == Illustration.REMINDER
+            PrimaryButton(
+                stringResource(if (reminderPage) R.string.onboarding_start else R.string.onboarding_next),
+                onClick = { if (reminderPage) turnOnReminders() else next() },
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
+            TextButton(
+                onClick = ::next,
+                enabled = reminderPage,
+                modifier = Modifier.fillMaxWidth().alpha(if (reminderPage) 1f else 0f).padding(bottom = 4.dp),
+            ) {
+                Text(stringResource(R.string.onboarding_no_reminders), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            }
         }
     }
 }
@@ -247,5 +290,31 @@ private fun ReminderIllustration() {
                 Text(stringResource(R.string.onboarding_remind_sample), color = c.ink, fontSize = 14.sp)
             }
         }
+    }
+}
+
+@Composable
+private fun AccountIllustration() {
+    val c = Brand.colors
+    Card {
+        Row(
+            Modifier.padding(horizontal = 22.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Device(Icons.Filled.PhoneAndroid)
+            Icon(Icons.Filled.Sync, null, tint = c.gray, modifier = Modifier.size(22.dp))
+            Image(painterResource(R.drawable.brand_mark), null, modifier = Modifier.size(56.dp).clip(RoundedCornerShape(15.dp)))
+            Icon(Icons.Filled.Sync, null, tint = c.gray, modifier = Modifier.size(22.dp))
+            Device(Icons.Filled.PhoneIphone)
+        }
+    }
+}
+
+@Composable
+private fun Device(icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    val c = Brand.colors
+    Box(Modifier.size(48.dp).background(c.line, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+        Icon(icon, null, tint = c.ink, modifier = Modifier.size(24.dp))
     }
 }

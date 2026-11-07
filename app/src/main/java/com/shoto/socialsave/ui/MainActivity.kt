@@ -142,6 +142,7 @@ private fun AppRoot(pendingPostId: String?, onPendingHandled: () -> Unit) {
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         MetadataWorker.enqueue(context)
+        container.sync.requestSync()
         container.rescheduleReminder()
     }
 

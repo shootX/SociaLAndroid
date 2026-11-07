@@ -25,6 +25,10 @@ class ThumbnailStore(context: Context) {
         name?.let { File(directory, it).delete() }
     }
 
+    fun deleteAll() {
+        directory.listFiles()?.forEach { it.delete() }
+    }
+
     companion object {
         private const val MAX_PIXELS = 900
 

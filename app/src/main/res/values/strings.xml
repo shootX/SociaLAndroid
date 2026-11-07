@@ -171,4 +171,31 @@
     <string name="widget_empty_body">Tap Share in any app and choose SocialSave.</string>
     <string name="widget_empty_title">Nothing saved yet</string>
     <string name="widget_name">Rediscover</string>
+
+    <!-- Accounts and sync: same keys and texts as the iOS app (plans/accounts-sync-ads.md). -->
+    <string name="account_section">Account</string>
+    <string name="account_sign_in_row">Sign in to sync</string>
+    <string name="sign_in_title">Keep your saves on every phone</string>
+    <string name="sign_in_subtitle">Sign in and your library syncs to every device where you use the same account.</string>
+    <string name="sign_in_apple">Continue with Apple</string>
+    <string name="sign_in_google">Continue with Google</string>
+    <string name="sign_in_facebook">Continue with Facebook</string>
+    <string name="sign_in_not_now">Not now</string>
+    <string name="sign_in_legal">By continuing you agree to the Terms and Privacy Policy.</string>
+    <string name="sign_in_failed">Couldn\'t sign in. Please try again.</string>
+    <string name="account_last_synced">Last synced %1$s</string>
+    <string name="account_never_synced">Not synced yet</string>
+    <string name="account_syncing">Syncing…</string>
+    <string name="account_sync_now">Sync now</string>
+    <string name="account_sync_failed">Sync failed. We\'ll try again.</string>
+    <string name="account_session_expired">Your session expired. Sign in again to keep syncing.</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_sign_out_confirm_title">Sign out?</string>
+    <string name="account_sign_out_confirm_body">Your saves stay in your account and will be removed from this phone.</string>
+    <string name="account_sign_out_unsynced">Some changes haven\'t synced yet and will be lost. Sign out anyway?</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_confirm_title">Delete your account?</string>
+    <string name="account_delete_confirm_body">This permanently deletes your account and every save on our server. Saves on this phone are removed too.</string>
+    <string name="account_delete_confirm_action">Delete</string>
+    <string name="account_delete_failed">Couldn\'t delete your account. Check your connection and try again.</string>
 </resources>

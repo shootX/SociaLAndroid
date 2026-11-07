@@ -1,5 +1,6 @@
 package com.shoto.socialsave.data
 
+import androidx.room.withTransaction
 import com.shoto.socialsave.core.PlatformDetector
 import com.shoto.socialsave.core.ShortLinkExpander
 import com.shoto.socialsave.core.UrlNormalizer
@@ -19,7 +20,10 @@ sealed class CategoryError : Exception() {
 
 /**
  * Every change to the library goes through here, so side effects (thumbnail cleanup, preview fetching,
- * widget refresh) happen in one place. [onChanged] is called after each write.
+ * widget refresh, sync) happen in one place. [onChanged] is called after each write.
+ *
+ * Each write marks the row dirty and moves its `updatedAt` forward (see the DAOs). Deletes leave a
+ * tombstone while [tracksDeletes] is true (an account exists), so the next sync can tell the server.
  */
 class LibraryRepository(
     private val db: AppDatabase,
@@ -27,9 +31,12 @@ class LibraryRepository(
     private val expander: ShortLinkExpander,
     private val onPostsAdded: () -> Unit,
     private val onChanged: () -> Unit,
+    private val tracksDeletes: () -> Boolean = { false },
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val posts = db.posts()
     private val categories = db.categories()
+    private val tombstones = db.tombstones()
 
     fun observePosts(): Flow<List<SavedPost>> = posts.observeAll()
     fun observePost(id: String): Flow<SavedPost?> = posts.observe(id)
@@ -50,7 +57,10 @@ class LibraryRepository(
         }
 
         val validCategory = categoryId?.takeIf { categories.exists(it) > 0 }
+        val now = clock()
         val post = SavedPost(
+            createdAt = now,
+            updatedAt = now,
             url = finalUrl,
             canonicalUrl = finalCanonical,
             platform = PlatformDetector.detect(finalCanonical).rawValue,
@@ -72,32 +82,40 @@ class LibraryRepository(
         if (ids.isEmpty()) return
         val list = ids.toList()
         val files = posts.byIds(list).map { it.thumbnailFile }
-        posts.delete(list)
+        val now = clock()
+        db.withTransaction {
+            posts.delete(list)
+            if (tracksDeletes()) tombstones.insertPosts(list.map { DeletedPost(it, now) })
+        }
         files.forEach(thumbnails::delete)
         onChanged()
     }
 
     suspend fun setFavorite(ids: Collection<String>, favorite: Boolean) {
-        posts.setFavorite(ids.toList(), favorite)
+        posts.setFavorite(ids.toList(), favorite, clock())
         onChanged()
     }
 
     suspend fun move(ids: Collection<String>, categoryId: String?) {
-        posts.move(ids.toList(), categoryId)
+        posts.move(ids.toList(), categoryId, clock())
         onChanged()
     }
 
     suspend fun setNotes(id: String, raw: String) {
-        posts.setNotes(id, raw.trim().ifEmpty { null })
+        posts.setNotes(id, raw.trim().ifEmpty { null }, clock())
+        onChanged()
     }
 
     suspend fun createCategory(name: String, colorHex: String): Category {
         val trimmed = name.trim()
         val existing = categories.all()
         validate(trimmed, null, existing)
+        val now = clock()
         val category = Category(
             name = trimmed,
             colorHex = colorHex,
+            createdAt = now,
+            updatedAt = now,
             sortOrder = (existing.maxOfOrNull { it.sortOrder } ?: -1) + 1,
         )
         categories.insert(category)
@@ -108,19 +126,31 @@ class LibraryRepository(
     suspend fun updateCategory(category: Category, name: String, colorHex: String) {
         val trimmed = name.trim()
         validate(trimmed, category.id, categories.all())
-        categories.update(category.copy(name = trimmed, colorHex = colorHex))
+        categories.update(category.copy(name = trimmed, colorHex = colorHex).touched(clock()))
         onChanged()
     }
 
     suspend fun deleteCategory(id: String) {
-        posts.clearCategory(id)
-        categories.delete(id)
+        val now = clock()
+        db.withTransaction {
+            posts.clearCategory(id, now)
+            categories.delete(id)
+            if (tracksDeletes()) tombstones.insertCategory(DeletedCategory(id, now))
+        }
         onChanged()
     }
 
     suspend fun reorderCategories(ordered: List<Category>) {
-        categories.updateAll(ordered.mapIndexed { index, category -> category.copy(sortOrder = index) })
+        val now = clock()
+        val changed = ordered.mapIndexedNotNull { index, category ->
+            if (category.sortOrder == index) null else category.copy(sortOrder = index).touched(now)
+        }
+        if (changed.isEmpty()) return
+        categories.updateAll(changed)
+        onChanged()
     }
+
+    private fun Category.touched(now: Long) = copy(updatedAt = maxOf(now, updatedAt + 1), dirty = true)
 
     private fun validate(name: String, excludingId: String?, existing: List<Category>) {
         if (name.isEmpty()) throw CategoryError.EmptyName

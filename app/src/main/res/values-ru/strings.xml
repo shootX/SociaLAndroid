@@ -170,4 +170,31 @@
     <string name="widget_empty_body">Нажмите «Поделиться» и выберите SocialSave.</string>
     <string name="widget_empty_title">Пока ничего не сохранено</string>
     <string name="widget_name">Вспомнить</string>
+
+    <!-- Accounts and sync: same keys and texts as the iOS app (plans/accounts-sync-ads.md). -->
+    <string name="account_section">Аккаунт</string>
+    <string name="account_sign_in_row">Войдите для синхронизации</string>
+    <string name="sign_in_title">Ваши сохранения на любом телефоне</string>
+    <string name="sign_in_subtitle">Войдите, и библиотека будет на всех устройствах, где вы используете этот аккаунт.</string>
+    <string name="sign_in_apple">Продолжить с Apple</string>
+    <string name="sign_in_google">Продолжить с Google</string>
+    <string name="sign_in_facebook">Продолжить с Facebook</string>
+    <string name="sign_in_not_now">Не сейчас</string>
+    <string name="sign_in_legal">Продолжая, вы принимаете Условия и Политику конфиденциальности.</string>
+    <string name="sign_in_failed">Не удалось войти. Попробуйте ещё раз.</string>
+    <string name="account_last_synced">Синхронизировано: %1$s</string>
+    <string name="account_never_synced">Ещё не синхронизировано</string>
+    <string name="account_syncing">Синхронизация…</string>
+    <string name="account_sync_now">Синхронизировать</string>
+    <string name="account_sync_failed">Не удалось синхронизировать. Попробуем снова.</string>
+    <string name="account_session_expired">Сессия истекла. Войдите снова, чтобы продолжить синхронизацию.</string>
+    <string name="account_sign_out">Выйти</string>
+    <string name="account_sign_out_confirm_title">Выйти?</string>
+    <string name="account_sign_out_confirm_body">Сохранения останутся в аккаунте и будут удалены с этого телефона.</string>
+    <string name="account_sign_out_unsynced">Некоторые изменения ещё не синхронизированы и пропадут. Всё равно выйти?</string>
+    <string name="account_delete">Удалить аккаунт</string>
+    <string name="account_delete_confirm_title">Удалить аккаунт?</string>
+    <string name="account_delete_confirm_body">Аккаунт и все сохранения на сервере будут удалены навсегда. С этого телефона тоже.</string>
+    <string name="account_delete_confirm_action">Удалить</string>
+    <string name="account_delete_failed">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
 </resources>

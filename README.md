@@ -1,8 +1,10 @@
 # SocialSave for Android
 
-Kotlin + Jetpack Compose version of the SocialSave iOS app (`shootX/SociaLIOS`). Same product: a private,
-on-device library of links saved from Instagram, TikTok, YouTube, Facebook, X, Threads, Pinterest, Reddit
-and the web. No account, no server. The one addition is AdMob native ads in the library grid.
+Kotlin + Jetpack Compose version of the SocialSave iOS app (`shootX/SociaLIOS`). Same product: a private
+library of links saved from Instagram, TikTok, YouTube, Facebook, X, Threads, Pinterest, Reddit and the web.
+Signing in is optional: with Apple, Google or Facebook the library syncs through the SocialSave API
+(`SociaLAPI`) between phones, iPhone included. Without an account everything stays on the device. The one
+addition is AdMob native ads in the library grid.
 
 ## Features (parity with iOS)
 
@@ -31,6 +33,33 @@ Strings in `app/src/main/res/values*/strings.xml` were generated from the iOS `L
 * **Debug builds always use Google's test ids.** Release builds read the real ids from
   `ADMOB_APP_ID` / `ADMOB_NATIVE_ID` (Gradle property or environment variable, e.g. GitHub Actions secrets),
   and fall back to the test ids if they are missing.
+
+## Configuration
+
+Values are read from a Gradle property (`-P`, `~/.gradle/gradle.properties`) or an environment variable
+(e.g. GitHub Actions secrets). The app builds without any of them.
+
+| Name | Used for |
+| --- | --- |
+| `ADMOB_APP_ID` | AdMob app id (release only; debug and missing values use Google's test ids) |
+| `ADMOB_NATIVE_ID` | AdMob native ad unit id (release only, same fallback) |
+| `FACEBOOK_APP_ID` | Facebook Login app id; the Facebook button is hidden while this or the token is empty |
+| `FACEBOOK_CLIENT_TOKEN` | Facebook client token (App settings → Advanced) |
+| `API_BASE_URL` | Optional; the sync API, default `https://socialsave.cc/api/v1` |
+| `GOOGLE_SERVER_CLIENT_ID` | Optional; the Google **web** OAuth client the API accepts as `aud` (a default is built in) |
+
+Provider setup outside the code:
+
+* **Google:** in the same Google Cloud project as the web client, create an **Android** OAuth client for
+  package `com.shoto.socialsave` with the SHA-1 of every signing key in use: the debug keystore, the
+  upload/release key and the Play App Signing key (Play Console → App integrity). Without a matching
+  Android client, Credential Manager returns no Google account.
+* **Facebook:** in the Facebook app, add the Android platform with package `com.shoto.socialsave`, class
+  `com.shoto.socialsave.ui.MainActivity`, and the key hash of each signing key
+  (`keytool -exportcert -alias <alias> -keystore <keystore> | openssl sha1 -binary | openssl base64`;
+  for Play App Signing, convert the SHA-1 from Play Console to base64).
+* **Apple:** nothing on the device; Sign in with Apple runs as a web flow through the API, which returns to
+  `socialsave://auth/apple`.
 
 ## Project layout
 

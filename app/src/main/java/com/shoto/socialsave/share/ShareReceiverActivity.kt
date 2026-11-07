@@ -57,7 +57,14 @@ class ShareReceiverActivity : ComponentActivity() {
         val container = this.container
         val link = sharedLink(intent)
         // Saving runs in the app scope so it finishes even if the sheet is dismissed early.
-        val pending = link?.let { container.scope.async { container.repository.saveLink(it) } }
+        val pending = link?.let {
+            container.scope.async {
+                container.repository.saveLink(it).also { result ->
+                    // Contract trigger: a share-sheet save syncs without waiting for the app to open.
+                    if (result is SaveResult.Saved) container.sync.requestSync()
+                }
+            }
+        }
 
         setContent {
             val appearance by container.settings.appearance.collectAsStateWithLifecycle()

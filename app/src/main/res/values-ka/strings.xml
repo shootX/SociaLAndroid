@@ -170,4 +170,30 @@
     <string name="widget_empty_body">ნებისმიერ აპში დააჭირე Share-ს და აირჩიე SocialSave.</string>
     <string name="widget_empty_title">შენახული ჯერ არაფერია</string>
     <string name="widget_name">გაიხსენე</string>
+
+    <!-- Accounts and sync: same keys and texts as the iOS app (plans/accounts-sync-ads.md). -->
+    <string name="account_section">ანგარიში</string>
+    <string name="account_sign_in_row">შედით სინქრონიზაციისთვის</string>
+    <string name="sign_in_title">შენახულები ყველა ტელეფონზე</string>
+    <string name="sign_in_subtitle">შედით და თქვენი ბიბლიოთეკა ყველა მოწყობილობაზე გამოჩნდება, სადაც ამავე ანგარიშით შეხვალთ.</string>
+    <string name="sign_in_apple">Apple-ით გაგრძელება</string>
+    <string name="sign_in_google">Google-ით გაგრძელება</string>
+    <string name="sign_in_facebook">Facebook-ით გაგრძელება</string>
+    <string name="sign_in_not_now">ახლა არა</string>
+    <string name="sign_in_legal">გაგრძელებით ეთანხმებით წესებს და კონფიდენციალურობის პოლიტიკას.</string>
+    <string name="sign_in_failed">შესვლა ვერ მოხერხდა. სცადეთ თავიდან.</string>
+    <string name="account_last_synced">ბოლო სინქრონი: %1$s</string>
+    <string name="account_never_synced">ჯერ არ დასინქრონებულა</string>
+    <string name="account_syncing">სინქრონიზაცია…</string>
+    <string name="account_sync_now">ახლავე სინქრონი</string>
+    <string name="account_sync_failed">სინქრონი ვერ მოხერხდა. თავიდან ვცდით.</string>
+    <string name="account_session_expired">სესიას ვადა გაუვიდა. სინქრონის გასაგრძელებლად თავიდან შედით.</string>
+    <string name="account_sign_out">გასვლა</string>
+    <string name="account_sign_out_confirm_title">გახვალთ?</string>
+    <string name="account_sign_out_confirm_body">შენახულები ანგარიშში დარჩება, ამ ტელეფონიდან კი წაიშლება.</string>
+    <string name="account_sign_out_unsynced">ზოგი ცვლილება ჯერ არ დასინქრონებულა და დაიკარგება. მაინც გახვალთ?</string>
+    <string name="account_delete">ანგარიშის წაშლა</string>
+    <string name="account_delete_confirm_title">წავშალოთ ანგარიში?</string>
+    <string name="account_delete_confirm_body">ეს სამუდამოდ წაშლის ანგარიშს და სერვერზე შენახულ ყველა ბმულს. ამ ტელეფონიდანაც წაიშლება.</string>
+    <string name="account_delete_confirm_action">წაშლა</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.shoto.socialsave.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -30,6 +31,10 @@ data class SavedPost(
     val isFavorite: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val categoryId: String? = null,
+    /** Last-write-wins clock for sync: the time of the last edit made on any device. */
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = createdAt,
+    /** Changed locally since the last successful sync. */
+    @ColumnInfo(defaultValue = "1") val dirty: Boolean = true,
 ) {
     val socialPlatform: SocialPlatform get() = SocialPlatform.fromRaw(platform)
 
@@ -43,4 +48,14 @@ data class Category(
     val colorHex: String,
     val createdAt: Long = System.currentTimeMillis(),
     val sortOrder: Int,
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = createdAt,
+    @ColumnInfo(defaultValue = "1") val dirty: Boolean = true,
 )
+
+/** A post deleted on this phone that the server has not been told about yet. */
+@Entity(tableName = "deleted_posts")
+data class DeletedPost(@PrimaryKey val id: String, val deletedAt: Long)
+
+/** A category deleted on this phone that the server has not been told about yet. */
+@Entity(tableName = "deleted_categories")
+data class DeletedCategory(@PrimaryKey val id: String, val deletedAt: Long)

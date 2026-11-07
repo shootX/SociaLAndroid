@@ -33,6 +33,23 @@ android {
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField("String", "ADMOB_NATIVE_ID", "\"$admobNativeId\"")
         buildConfigField("String", "WEBSITE_URL", "\"https://socialsave.cc\"")
+
+        // Accounts and sync. The Google id is the web/server OAuth client the API accepts as `aud`;
+        // Android also needs its own Android OAuth client (package + SHA-1) in the same Cloud project.
+        val apiBaseUrl = config("API_BASE_URL") ?: "https://socialsave.cc/api/v1"
+        val googleServerClientId = config("GOOGLE_SERVER_CLIENT_ID")
+            ?: "81667312331-mrh5eoha3rdq3d1kv4ecahovn8g89n7j.apps.googleusercontent.com"
+        // Empty until the owner creates the Facebook app; the Facebook button is hidden while either is empty.
+        val facebookAppId = config("FACEBOOK_APP_ID").orEmpty()
+        val facebookClientToken = config("FACEBOOK_CLIENT_TOKEN").orEmpty()
+        val facebookEnabled = facebookAppId.isNotEmpty() && facebookClientToken.isNotEmpty()
+        buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl.trimEnd('/')}\"")
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleServerClientId\"")
+        buildConfigField("String", "FACEBOOK_APP_ID", "\"$facebookAppId\"")
+        buildConfigField("boolean", "FACEBOOK_ENABLED", facebookEnabled.toString())
+        manifestPlaceholders["facebookAppId"] = facebookAppId
+        manifestPlaceholders["facebookClientToken"] = facebookClientToken
+        manifestPlaceholders["facebookEnabled"] = facebookEnabled.toString()
     }
 
     signingConfigs {
@@ -121,5 +138,14 @@ dependencies {
     implementation(libs.play.services.ads)
     implementation(libs.ump)
 
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services)
+    implementation(libs.googleid)
+    implementation(libs.facebook.login)
+    implementation(libs.androidx.browser)
+
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    // The Android jar only has stubs for org.json; JVM tests need the real implementation.
+    testImplementation(libs.org.json)
 }

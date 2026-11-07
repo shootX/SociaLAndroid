@@ -8,6 +8,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.shoto.socialsave.account.SyncMerge
 import com.shoto.socialsave.container
 import com.shoto.socialsave.core.LinkMetadataFetcher
 import com.shoto.socialsave.core.TitleSanitizer
@@ -30,6 +31,7 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val container = applicationContext.container
         val dao = container.database.posts()
         val tried = mutableSetOf<String>()
+        var syncWorthy = false
 
         // New links may arrive while we work, so keep going until a pass finds nothing new.
         while (true) {
@@ -38,20 +40,25 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
             tried += batch.map { it.id }
             val gate = Semaphore(MAX_CONCURRENT)
             coroutineScope {
-                batch.map { post -> async { gate.withPermit { enrich(post) } } }.awaitAll()
+                if (batch.map { post -> async { gate.withPermit { enrich(post) } } }.awaitAll().any { it }) {
+                    syncWorthy = true
+                }
             }
             WidgetUpdater.update(applicationContext)
         }
+        // New titles should reach the user's other phones.
+        if (syncWorthy) container.sync.requestSync()
         return Result.success()
     }
 
-    private suspend fun enrich(start: SavedPost) {
+    /** Returns true when a field other phones should get (title, author…) changed. */
+    private suspend fun enrich(start: SavedPost): Boolean {
         val container = applicationContext.container
         val dao = container.database.posts()
         dao.markLoading(start.id)
 
         val metadata = runCatching { fetcher.fetch(start.canonicalUrl.ifEmpty { start.url }) }.getOrNull()
-        val current = dao.get(start.id) ?: return
+        val current = dao.get(start.id) ?: return false
         val now = System.currentTimeMillis()
 
         if (metadata == null) {
@@ -63,7 +70,7 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
                     metadataUpdatedAt = now,
                 ),
             )
-            return
+            return false
         }
 
         var updated = current.copy(
@@ -90,8 +97,11 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
             )
         }
         dao.saveMetadata(updated)
+        val syncWorthy = SyncMerge.metadataNeedsSync(current, updated)
+        if (syncWorthy) dao.markMetadataChanged(current.id)
         // The user deleted the post while we were fetching: don't leave its new thumbnail behind.
         if (savedFile != null && dao.get(current.id) == null) container.thumbnails.delete(savedFile)
+        return syncWorthy
     }
 
     private suspend fun PostDao.saveMetadata(post: SavedPost) = updateMetadata(

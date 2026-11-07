@@ -51,7 +51,10 @@ class ClipboardSaveActivity : ComponentActivity() {
         val app = applicationContext
         app.container.scope.launch {
             val message = when (app.container.repository.saveLink(link)) {
-                is SaveResult.Saved -> R.string.intent_save_copied_saved
+                is SaveResult.Saved -> {
+                    app.container.sync.requestSync()
+                    R.string.intent_save_copied_saved
+                }
                 SaveResult.AlreadyExists -> R.string.intent_save_copied_already
                 SaveResult.InvalidUrl -> R.string.intent_save_copied_no_link
                 SaveResult.Failure -> R.string.intent_save_copied_failed

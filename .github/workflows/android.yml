@@ -31,6 +31,11 @@ jobs:
         env:
           ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
           ADMOB_NATIVE_ID: ${{ secrets.ADMOB_NATIVE_ID }}
+          # Optional; empty values fall back to the defaults in app/build.gradle.kts.
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          FACEBOOK_APP_ID: ${{ secrets.FACEBOOK_APP_ID }}
+          FACEBOOK_CLIENT_TOKEN: ${{ secrets.FACEBOOK_CLIENT_TOKEN }}
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleRelease
 
       - name: Lint (report only)

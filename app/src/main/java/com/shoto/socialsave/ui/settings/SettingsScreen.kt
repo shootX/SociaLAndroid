@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,8 +57,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.shoto.socialsave.BuildConfig
 import com.shoto.socialsave.R
 import com.shoto.socialsave.account.AccountState
@@ -111,6 +115,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     var signInSheet by remember { mutableStateOf(false) }
     var accountDialog by remember { mutableStateOf<AccountDialog?>(null) }
     var accountBusy by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
 
     // Runs in the app scope so leaving Settings doesn't cancel a sign-out halfway.
     fun signOut(force: Boolean) {
@@ -124,14 +129,18 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
         }
     }
 
-    // On failure the account and the library stay; the dialog says so and offers another try.
+    // On failure the account and the library stay; the dialog says so and offers another try. Not after a 401:
+    // the session is expired then, the Delete row is gone and a retry can't succeed.
     fun deleteAccount() {
         accountBusy = true
+        deleting = true
         container.scope.launch {
             val deleted = container.account.deleteAccount()
             withContext(Dispatchers.Main) {
                 accountBusy = false
-                if (!deleted) accountDialog = AccountDialog.DELETE_FAILED
+                deleting = false
+                val usable = (container.account.state.value as? AccountState.SignedIn)?.expired == false
+                if (!deleted && usable) accountDialog = AccountDialog.DELETE_FAILED
             }
         }
     }
@@ -167,7 +176,11 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                         signInSheet = true
                     }
                     is AccountState.SignedIn -> {
-                        AccountHeader(state.user, accountStatusText(state, syncStatus, accountBusy), state.expired)
+                        AccountHeader(
+                            state.user,
+                            accountStatusText(state, syncStatus),
+                            warning = state.expired || (syncStatus.failed && !syncStatus.running),
+                        )
                         Divider()
                         if (state.expired) {
                             NavRow(Icons.Filled.Sync, stringResource(R.string.account_sign_in_row)) { signInSheet = true }
@@ -182,7 +195,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                         }
                         if (!state.expired) {
                             Divider()
-                            LinkRow(stringResource(R.string.account_delete), enabled = !accountBusy, color = c.danger) {
+                            LinkRow(stringResource(R.string.account_delete), enabled = !accountBusy, color = c.danger, progress = deleting) {
                                 accountDialog = AccountDialog.DELETE
                             }
                         }
@@ -303,7 +316,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 title = stringResource(R.string.account_sign_out_confirm_title),
                 body = stringResource(R.string.account_sign_out_confirm_body),
                 confirm = stringResource(R.string.account_sign_out),
-                destructive = false,
+                destructive = true,
                 onDismiss = dismiss,
             ) { signOut(force = false) }
             AccountDialog.UNSYNCED -> ConfirmDialog(
@@ -408,24 +421,36 @@ private fun ValueRow(title: String, value: String, onClick: (() -> Unit)?) {
 }
 
 @Composable
-private fun LinkRow(title: String, enabled: Boolean = true, color: Color = Brand.colors.ink, onClick: () -> Unit) {
-    Text(
-        title,
-        color = if (enabled) color else color.copy(alpha = 0.4f),
-        fontSize = 16.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
-    )
+private fun LinkRow(
+    title: String,
+    enabled: Boolean = true,
+    color: Color = Brand.colors.ink,
+    progress: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            title,
+            color = if (enabled) color else color.copy(alpha = 0.4f),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        if (progress) CircularProgressIndicator(color = color, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+    }
 }
 
 private enum class AccountDialog { SIGN_OUT, UNSYNCED, DELETE, DELETE_FAILED }
 
 @Composable
-private fun accountStatusText(state: AccountState.SignedIn, sync: SyncStatus, busy: Boolean): String {
+private fun accountStatusText(state: AccountState.SignedIn, sync: SyncStatus): String {
     val context = LocalContext.current
     return when {
         state.expired -> stringResource(R.string.account_session_expired)
-        sync.running || busy -> stringResource(R.string.account_syncing)
+        sync.running -> stringResource(R.string.account_syncing)
         sync.failed -> stringResource(R.string.account_sync_failed)
         sync.lastSyncedAt != null -> stringResource(R.string.account_last_synced, lastSyncedText(context, sync.lastSyncedAt))
         else -> stringResource(R.string.account_never_synced)
@@ -445,13 +470,17 @@ private fun AccountHeader(user: AccountUser, status: String, warning: Boolean) {
     val c = Brand.colors
     val title = user.name?.takeIf { it.isNotBlank() } ?: user.email.orEmpty()
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(40.dp).background(c.ink, CircleShape), contentAlignment = Alignment.Center) {
+        // The letter stays underneath: it shows while the photo loads and when there is none or it fails.
+        Box(Modifier.size(40.dp).clip(CircleShape).background(c.ink), contentAlignment = Alignment.Center) {
             Text(
                 title.firstOrNull()?.uppercase() ?: "?",
                 color = c.canvas,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
             )
+            if (!user.avatarUrl.isNullOrBlank()) {
+                AsyncImage(user.avatarUrl, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {

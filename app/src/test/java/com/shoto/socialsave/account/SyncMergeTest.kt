@@ -110,6 +110,43 @@ class SyncMergeTest {
         assertEquals(2_000, plan.post.updatedAt)
     }
 
+    @Test fun canonicalClashFillsEmptyFetchedFields() {
+        val other = local(id = "y", title = "Fetched here").copy(authorName = "@a", thumbnailUrl = "https://cdn/y.jpg")
+        val plan = SyncMerge.planSave(remote(id = "x"), null, null, other, now = 5_000) as SavePlan.Upsert
+        assertEquals("Fetched here", plan.post.title)
+        assertEquals("@a", plan.post.authorName)
+        assertEquals("https://cdn/y.jpg", plan.post.thumbnailUrl)
+        // Fetched data goes up under the metadata rule: one millisecond past the server's version.
+        assertTrue(plan.post.dirty)
+        assertEquals(2_001, plan.post.updatedAt)
+    }
+
+    @Test fun canonicalClashFillsEmptySourceHost() {
+        val incoming = local(id = "x", updatedAt = 2_000).copy(sourceHost = null, dirty = false)
+        val replaced = local(id = "y").copy(sourceHost = "tiktok.com")
+        val merged = SyncMerge.mergeClash(incoming, replaced, incomingUpdatedAt = 2_000, now = 5_000)
+        assertEquals("tiktok.com", merged.sourceHost)
+        assertTrue(merged.dirty)
+        assertEquals(2_001, merged.updatedAt)
+    }
+
+    @Test fun canonicalClashKeepsIncomingFetchedFields() {
+        val other = local(id = "y", title = "Local title")
+        val plan = SyncMerge.planSave(remote(id = "x", title = "Server title"), null, null, other, 5_000) as SavePlan.Upsert
+        assertEquals("Server title", plan.post.title)
+        assertFalse("nothing to upload", plan.post.dirty)
+        assertEquals(2_000, plan.post.updatedAt)
+    }
+
+    @Test fun canonicalClashNoteMergeStampWinsOverMetadataRule() {
+        val other = local(id = "y", note = "mine", title = "Fetched here")
+        val plan = SyncMerge.planSave(remote(id = "x"), null, null, other, now = 5_000) as SavePlan.Upsert
+        assertEquals("mine", plan.post.notes)
+        assertEquals("Fetched here", plan.post.title)
+        assertTrue(plan.post.dirty)
+        assertEquals(5_000, plan.post.updatedAt)
+    }
+
     @Test fun categoryRules() {
         val incoming = RemoteCollection("c", "Cars", "#3F5C6A", 1, 1_000, 2_000, deleted = false)
         val clean = Category(id = "c", name = "Old", colorHex = "#000000", createdAt = 1_000, sortOrder = 0, updatedAt = 1_500, dirty = false)

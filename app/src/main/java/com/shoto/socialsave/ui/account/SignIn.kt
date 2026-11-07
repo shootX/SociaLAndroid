@@ -72,6 +72,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignInSheet(onDismiss: () -> Unit) {
     val c = Brand.colors
+    val status by LocalContext.current.container.account.signInStatus.collectAsStateWithLifecycle()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -90,11 +91,27 @@ fun SignInSheet(onDismiss: () -> Unit) {
             SignInHeadline(TextAlign.Center)
             Spacer(Modifier.height(24.dp))
             SignInOptions(onSignedIn = onDismiss)
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Text(stringResource(R.string.sign_in_not_now), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            TextButton(
+                onClick = onDismiss,
+                enabled = status != SignInStatus.WORKING,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            ) {
+                NotNowLabel(enabled = status != SignInStatus.WORKING)
             }
         }
     }
+}
+
+/** "Not now" under the providers, dimmed while a sign-in is running (the button is disabled then). */
+@Composable
+fun NotNowLabel(enabled: Boolean) {
+    val c = Brand.colors
+    Text(
+        stringResource(R.string.sign_in_not_now),
+        color = if (enabled) c.gray else c.gray.copy(alpha = 0.4f),
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+    )
 }
 
 @Composable
@@ -122,8 +139,8 @@ fun SignInHeadline(align: TextAlign, titleSize: Int = 24) {
 }
 
 /**
- * Apple (black), Google and Facebook buttons, the error line and the legal text with Terms/Privacy links.
- * [onSignedIn] runs once the account becomes usable.
+ * Apple (black, white in dark theme), Google and Facebook (blue) buttons, the error line and the legal text
+ * with Terms/Privacy links. [onSignedIn] runs once the account becomes usable.
  */
 @Composable
 fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
@@ -162,9 +179,11 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
                 text = stringResource(R.string.sign_in_apple),
                 logo = R.drawable.ic_logo_apple,
                 enabled = !busy,
-                container = Color.Black,
-                content = Color.White,
-                border = if (c.isDark) BorderStroke(1.dp, c.line) else null,
+                // Apple's guideline: black on a light background, white on a dark one.
+                container = if (c.isDark) Color.White else Color.Black,
+                content = if (c.isDark) Color.Black else Color.White,
+                border = null,
+                tintLogo = true,
             ) {
                 if (!AppleSignIn.start(context, account.appleStartUrl())) account.reportSignInFailure()
             }
@@ -186,9 +205,10 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
                     text = stringResource(R.string.sign_in_facebook),
                     logo = R.drawable.ic_logo_facebook,
                     enabled = !busy,
-                    container = c.surface,
-                    content = c.ink,
-                    border = BorderStroke(1.dp, c.line),
+                    container = FacebookBlue,
+                    content = Color.White,
+                    border = null,
+                    tintLogo = true,
                 ) {
                     account.clearSignInError()
                     facebook()
@@ -243,6 +263,7 @@ private fun ProviderButton(
     container: Color,
     content: Color,
     border: BorderStroke?,
+    tintLogo: Boolean = false,
     onClick: () -> Unit,
 ) {
     Button(
@@ -261,13 +282,15 @@ private fun ProviderButton(
         Icon(
             painterResource(logo),
             null,
-            tint = if (logo == R.drawable.ic_logo_apple) content else Color.Unspecified,
+            tint = if (tintLogo) content else Color.Unspecified,
             modifier = Modifier.size(19.dp),
         )
         Spacer(Modifier.width(10.dp))
         Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
+
+private val FacebookBlue = Color(0xFF1877F2)
 
 /** Facebook Login with the classic access token (the API verifies it with Graph `debug_token`). */
 @Composable

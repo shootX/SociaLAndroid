@@ -72,6 +72,11 @@ class AccountSession(
         when {
             // Not a flow we started (or a stale one): ignore it without showing an error.
             pending == null -> Log.w(TAG, "Apple callback without a pending sign-in")
+            // The person closed Apple's sheet: back to idle, no error (same as Google/Facebook cancel).
+            error == APPLE_CANCELLED -> {
+                Log.i(TAG, "Apple sign-in cancelled")
+                _signIn.value = SignInStatus.IDLE
+            }
             state != pending.state || error != null || code.isNullOrEmpty() -> {
                 Log.w(TAG, "Apple sign-in failed: ${error ?: "state mismatch or missing code"}")
                 _signIn.value = SignInStatus.FAILED
@@ -196,5 +201,6 @@ class AccountSession(
         const val TAG = "AccountSession"
         const val REFRESH_AFTER = 7L * 24 * 60 * 60 * 1000
         const val APPLE_STATE_MAX_AGE = 15L * 60 * 1000
+        const val APPLE_CANCELLED = "user_cancelled_authorize"
     }
 }

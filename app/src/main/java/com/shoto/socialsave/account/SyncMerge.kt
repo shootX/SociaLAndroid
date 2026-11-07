@@ -91,13 +91,19 @@ object SyncMerge {
 
     /**
      * A canonical clash: the local row goes away after giving its note/favorite to the incoming row when that
-     * one has none. Its thumbnail is the same picture, so it is kept instead of fetched again. If the merge
-     * changed what the server has, the row is marked dirty so the merge is uploaded.
+     * one has none, and its fetched title/author/thumbnail URL/host where the incoming row's are empty. Its
+     * thumbnail is the same picture, so it is kept instead of fetched again. If the merge changed what the
+     * server has, the row is marked dirty so the merge is uploaded: a note/favorite as a new edit ([now]),
+     * fetched fields alone under the metadata rule (one millisecond past the server's version).
      */
     fun mergeClash(incoming: SavedPost, replaced: SavedPost, incomingUpdatedAt: Long, now: Long): SavedPost {
         var merged = incoming.copy(
             notes = incoming.notes ?: replaced.notes,
             isFavorite = incoming.isFavorite || replaced.isFavorite,
+            title = incoming.title.orIfBlank(replaced.title),
+            authorName = incoming.authorName.orIfBlank(replaced.authorName),
+            thumbnailUrl = incoming.thumbnailUrl.orIfBlank(replaced.thumbnailUrl),
+            sourceHost = incoming.sourceHost.orIfBlank(replaced.sourceHost),
         )
         if (merged.thumbnailFile == null && replaced.thumbnailFile != null) {
             merged = merged.copy(
@@ -107,8 +113,14 @@ object SyncMerge {
                 metadataUpdatedAt = replaced.metadataUpdatedAt,
             )
         }
+        val metadataFilled = merged.title != incoming.title ||
+            merged.authorName != incoming.authorName ||
+            merged.thumbnailUrl != incoming.thumbnailUrl ||
+            merged.sourceHost != incoming.sourceHost
         if (merged.notes != incoming.notes || merged.isFavorite != incoming.isFavorite) {
             merged = merged.copy(dirty = true, updatedAt = maxOf(now, incomingUpdatedAt + 1))
+        } else if (metadataFilled) {
+            merged = merged.copy(dirty = true, updatedAt = incomingUpdatedAt + 1)
         }
         return merged
     }
@@ -154,4 +166,7 @@ object SyncMerge {
             (before.sourceHost == null && after.sourceHost != null)
 
     private fun String?.blankToNull(): String? = this?.takeIf { it.isNotBlank() }
+
+    /** [other] when this is empty and [other] isn't; otherwise this, unchanged. */
+    private fun String?.orIfBlank(other: String?): String? = if (isNullOrBlank() && !other.isNullOrBlank()) other else this
 }

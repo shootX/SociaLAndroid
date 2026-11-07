@@ -57,9 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shoto.socialsave.R
 import com.shoto.socialsave.account.AccountState
+import com.shoto.socialsave.account.SignInStatus
 import com.shoto.socialsave.container
+import com.shoto.socialsave.ui.account.NotNowLabel
 import com.shoto.socialsave.ui.account.SignInHeadline
 import com.shoto.socialsave.ui.account.SignInOptions
 import com.shoto.socialsave.ui.components.CategoryPalette
@@ -96,8 +99,15 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val isLast = pager.currentPage == pages.lastIndex
     val page = pages[pager.currentPage]
 
+    val signInStatus by container.account.signInStatus.collectAsStateWithLifecycle()
+
     fun next() {
         if (isLast) onFinish() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) }
+    }
+
+    // With the sign-in page in the pager, Skip jumps to it (it has its own "Not now"), like iOS.
+    fun skip() {
+        if (pages.last() == accountPage) scope.launch { pager.animateScrollToPage(pages.lastIndex) } else onFinish()
     }
 
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -124,7 +134,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
         Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
             if (!isLast) {
-                TextButton(onClick = onFinish) {
+                TextButton(onClick = ::skip) {
                     Text(stringResource(R.string.onboarding_skip), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
                 }
             }
@@ -164,8 +174,9 @@ fun OnboardingScreen(onFinish: () -> Unit) {
         }
         if (page.illustration == Illustration.ACCOUNT) {
             SignInOptions(onSignedIn = onFinish, modifier = Modifier.padding(horizontal = 24.dp))
-            TextButton(onClick = onFinish, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
-                Text(stringResource(R.string.sign_in_not_now), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            val notNowEnabled = signInStatus != SignInStatus.WORKING
+            TextButton(onClick = onFinish, enabled = notNowEnabled, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+                NotNowLabel(notNowEnabled)
             }
         } else {
             val reminderPage = page.illustration == Illustration.REMINDER

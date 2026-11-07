@@ -39,8 +39,26 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(post: SavedPost): Long
 
-    @Update
-    suspend fun update(post: SavedPost)
+    @Query("UPDATE saved_posts SET metadataStatus = 'LOADING' WHERE id = :id")
+    suspend fun markLoading(id: String)
+
+    /** Touches only the columns the metadata worker owns, so edits made meanwhile (favorite, category, notes) survive. */
+    @Query(
+        "UPDATE saved_posts SET title = :title, authorName = :authorName, thumbnailUrl = :thumbnailUrl, " +
+            "sourceHost = :sourceHost, thumbnailFile = :thumbnailFile, metadataStatus = :status, " +
+            "metadataAttempts = :attempts, metadataUpdatedAt = :updatedAt WHERE id = :id",
+    )
+    suspend fun updateMetadata(
+        id: String,
+        title: String?,
+        authorName: String?,
+        thumbnailUrl: String?,
+        sourceHost: String?,
+        thumbnailFile: String?,
+        status: MetadataStatus,
+        attempts: Int,
+        updatedAt: Long?,
+    )
 
     @Query("UPDATE saved_posts SET isFavorite = :favorite WHERE id IN (:ids)")
     suspend fun setFavorite(ids: List<String>, favorite: Boolean)

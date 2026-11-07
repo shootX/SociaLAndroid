@@ -93,7 +93,7 @@ import kotlinx.coroutines.withContext
 fun PostDetailScreen(postId: String, onBack: () -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
-    val postState = repository.observePost(postId).collectAsStateWithLifecycle(initialValue = null)
+    val postState = remember(postId) { repository.observePost(postId) }.collectAsStateWithLifecycle(initialValue = null)
     val c = Brand.colors
 
     Column(Modifier.fillMaxSize().background(c.canvas)) {
@@ -120,7 +120,7 @@ private fun PostDetailContent(post: SavedPost, onBack: () -> Unit) {
     val context = LocalContext.current
     val container = context.container
     val repository = container.repository
-    val categories by repository.observeCategories().collectAsStateWithLifecycle(initialValue = emptyList())
+    val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = rememberCoroutineScope()
     val c = Brand.colors
 

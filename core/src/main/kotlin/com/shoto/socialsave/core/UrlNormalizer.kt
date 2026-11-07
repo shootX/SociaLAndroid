@@ -17,13 +17,24 @@ object UrlNormalizer {
         "twclid", "yclid", "_r",
     )
 
+    private val socialDomains = listOf(
+        "youtube.com", "facebook.com", "x.com", "twitter.com", "instagram.com",
+        "threads.net", "threads.com", "tiktok.com", "pinterest.com", "reddit.com",
+    )
+
+    /** Query keys kept on social hosts; any other social domain keeps none. */
+    private val socialQueryAllowlist = mapOf(
+        "youtube.com" to setOf("v"),
+        "facebook.com" to setOf("v", "story_fbid", "id", "fbid"),
+    )
+
     private val linkPattern = Regex("""(?i)\b(?:https?://|www\.)[^\s<>"'`]+""")
     private const val TRAILING_PUNCTUATION = ".,;:!?)]}>»\"'”’…"
 
     /** Canonical form of the first web link in [raw], or null when there is none. */
     fun canonicalUrl(raw: String): String? {
         val trimmed = raw.trim()
-        canonicalize(trimmed)?.let { return it }
+        if (trimmed.none { it.isWhitespace() }) canonicalize(trimmed)?.let { return it }
         val extracted = firstHttpUrl(trimmed) ?: return null
         return canonicalize(extracted)
     }
@@ -31,7 +42,7 @@ object UrlNormalizer {
     /** The first http(s) link in free text, such as a caption shared together with its link. */
     fun firstHttpUrl(text: String): String? {
         val trimmed = text.trim()
-        if (canonicalize(trimmed) != null) return parse(trimmed)?.toString()
+        if (trimmed.none { it.isWhitespace() } && canonicalize(trimmed) != null) return parse(trimmed)?.toString()
 
         for (match in linkPattern.findAll(trimmed)) {
             var candidate = match.value.trimEnd { it in TRAILING_PUNCTUATION }
@@ -54,12 +65,24 @@ object UrlNormalizer {
         var path = uri.rawPath.orEmpty()
         if (path.length > 1 && path.endsWith("/")) path = path.dropLast(1)
 
-        val query = uri.rawQuery
-            ?.split('&')
-            ?.filter { it.isNotEmpty() }
-            ?.filter { decode(it.substringBefore('=')).lowercase() !in trackingParameters }
-            ?.sortedBy { decode(it.substringBefore('=')).lowercase() }
-            ?.takeIf { it.isNotEmpty() }
+        var items = uri.rawQuery?.split('&').orEmpty()
+        socialDomains.firstOrNull { host == "m.$it" || host == "mobile.$it" }?.let { host = it }
+        if (host == "twitter.com") host = "x.com"
+        if (host == "youtu.be" && path.length > 1 && path.indexOf('/', 1) == -1) {
+            items = items + "v=${path.substring(1)}"
+            host = "youtube.com"
+            path = "/watch"
+        }
+        val social = socialDomains.firstOrNull { host == it || host.endsWith(".$it") }
+        val allowed = social?.let { socialQueryAllowlist[it].orEmpty() }
+
+        val query = items
+            .filter { it.isNotEmpty() }
+            .map { it to decode(it.substringBefore('=')).lowercase() }
+            .filter { (_, key) -> key !in trackingParameters && (allowed == null || key in allowed) }
+            .sortedBy { it.second }
+            .map { it.first }
+            .takeIf { it.isNotEmpty() }
             ?.joinToString("&")
 
         return buildString {

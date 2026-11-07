@@ -91,8 +91,6 @@ class LibraryRepository(
         posts.setNotes(id, raw.trim().ifEmpty { null })
     }
 
-    suspend fun updatePost(post: SavedPost) = posts.update(post)
-
     suspend fun createCategory(name: String, colorHex: String): Category {
         val trimmed = name.trim()
         val existing = categories.all()

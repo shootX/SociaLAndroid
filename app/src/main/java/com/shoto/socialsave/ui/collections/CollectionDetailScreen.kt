@@ -51,8 +51,8 @@ fun CollectionDetailScreen(kind: CollectionKind, onBack: () -> Unit, onOpenPost:
     val scope = rememberCoroutineScope()
     val c = Brand.colors
 
-    val posts by repository.observePosts().collectAsStateWithLifecycle(initialValue = emptyList())
-    val categoriesState = repository.observeCategories().collectAsStateWithLifecycle(initialValue = null)
+    val posts by remember { repository.observePosts() }.collectAsStateWithLifecycle(initialValue = emptyList())
+    val categoriesState = remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = null)
     val categories = categoriesState.value.orEmpty()
     val category = (kind as? CollectionKind.OfCategory)?.let { k -> categories.firstOrNull { it.id == k.id } }
 

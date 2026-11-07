@@ -263,7 +263,7 @@ class ShortLinkExpander(private val client: OkHttpClient = defaultClient()) {
     companion object {
         private val hosts = setOf(
             "vm.tiktok.com", "vt.tiktok.com", "fb.watch", "fb.me", "l.facebook.com", "lm.facebook.com",
-            "youtu.be", "t.co", "pin.it", "instagr.am", "l.instagram.com", "redd.it",
+            "t.co", "pin.it", "instagr.am", "l.instagram.com", "redd.it",
         )
 
         fun isShortLink(raw: String): Boolean {

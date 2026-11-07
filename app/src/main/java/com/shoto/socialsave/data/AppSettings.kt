@@ -61,8 +61,9 @@ class AppSettings(context: Context) {
     }
 
     fun setReminderMinutes(value: Int) {
-        prefs.edit { putInt(KEY_REMINDER_MINUTES, value.coerceIn(0, 24 * 60 - 1)) }
-        _reminderMinutes.value = value
+        val minutes = value.coerceIn(0, 24 * 60 - 1)
+        prefs.edit { putInt(KEY_REMINDER_MINUTES, minutes) }
+        _reminderMinutes.value = minutes
     }
 
     private companion object {

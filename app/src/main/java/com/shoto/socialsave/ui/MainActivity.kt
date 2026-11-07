@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val container = this.container
-        pendingPostId.value = intent.postId()
+        if (savedInstanceState == null) pendingPostId.value = intent.postId()
         container.ads.gatherConsent(this)
 
         setContent {

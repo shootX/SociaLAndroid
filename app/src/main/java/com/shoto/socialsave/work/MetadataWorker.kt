@@ -12,6 +12,7 @@ import com.shoto.socialsave.container
 import com.shoto.socialsave.core.LinkMetadataFetcher
 import com.shoto.socialsave.core.TitleSanitizer
 import com.shoto.socialsave.data.MetadataStatus
+import com.shoto.socialsave.data.PostDao
 import com.shoto.socialsave.data.SavedPost
 import com.shoto.socialsave.data.ThumbnailStore
 import com.shoto.socialsave.widget.WidgetUpdater
@@ -47,7 +48,7 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
     private suspend fun enrich(start: SavedPost) {
         val container = applicationContext.container
         val dao = container.database.posts()
-        dao.update(start.copy(metadataStatus = MetadataStatus.LOADING))
+        dao.markLoading(start.id)
 
         val metadata = runCatching { fetcher.fetch(start.canonicalUrl.ifEmpty { start.url }) }.getOrNull()
         val current = dao.get(start.id) ?: return
@@ -55,7 +56,7 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
         if (metadata == null) {
             val attempts = current.metadataAttempts + 1
-            dao.update(
+            dao.saveMetadata(
                 current.copy(
                     metadataAttempts = attempts,
                     metadataStatus = if (attempts >= MAX_ATTEMPTS) MetadataStatus.UNAVAILABLE else MetadataStatus.FAILED,
@@ -73,11 +74,10 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
             metadataUpdatedAt = now,
         )
 
-        metadata.thumbnail?.let { jpeg ->
-            container.thumbnails.save(current.id, jpeg)?.let { file ->
-                container.thumbnails.delete(current.thumbnailFile)
-                updated = updated.copy(thumbnailFile = file)
-            }
+        val savedFile = metadata.thumbnail?.let { jpeg -> container.thumbnails.save(current.id, jpeg) }
+        if (savedFile != null) {
+            container.thumbnails.delete(current.thumbnailFile)
+            updated = updated.copy(thumbnailFile = savedFile)
         }
 
         updated = if (updated.thumbnailFile != null) {
@@ -89,8 +89,22 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
                 metadataStatus = if (attempts >= MAX_ATTEMPTS) MetadataStatus.UNAVAILABLE else MetadataStatus.FAILED,
             )
         }
-        dao.update(updated)
+        dao.saveMetadata(updated)
+        // The user deleted the post while we were fetching: don't leave its new thumbnail behind.
+        if (savedFile != null && dao.get(current.id) == null) container.thumbnails.delete(savedFile)
     }
+
+    private suspend fun PostDao.saveMetadata(post: SavedPost) = updateMetadata(
+        id = post.id,
+        title = post.title,
+        authorName = post.authorName,
+        thumbnailUrl = post.thumbnailUrl,
+        sourceHost = post.sourceHost,
+        thumbnailFile = post.thumbnailFile,
+        status = post.metadataStatus,
+        attempts = post.metadataAttempts,
+        updatedAt = post.metadataUpdatedAt,
+    )
 
     companion object {
         private const val UNIQUE_NAME = "metadata"

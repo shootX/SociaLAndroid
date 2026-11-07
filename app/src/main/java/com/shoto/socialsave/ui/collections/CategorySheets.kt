@@ -72,7 +72,7 @@ import kotlinx.coroutines.launch
 fun CategoryEditorSheet(existing: Category?, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
-    val categories by repository.observeCategories().collectAsStateWithLifecycle(initialValue = emptyList())
+    val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = rememberCoroutineScope()
     val c = Brand.colors
 
@@ -158,7 +158,7 @@ fun CategoryEditorSheet(existing: Category?, onDismiss: () -> Unit) {
 fun CategoriesManagerSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
-    val categories by repository.observeCategories().collectAsStateWithLifecycle(initialValue = emptyList())
+    val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = rememberCoroutineScope()
     val c = Brand.colors
 

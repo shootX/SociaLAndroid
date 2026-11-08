@@ -1,7 +1,8 @@
 package com.ich.socialsave.ui.library
 
+import com.ich.socialsave.ui.components.SegmentedPill
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,16 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -77,27 +74,18 @@ fun LibraryFilterSheet(
                 Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                SectionLabel(stringResource(R.string.saved_sort), Modifier.padding(top = 8.dp, bottom = 6.dp))
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    listOf(true to R.string.saved_newest, false to R.string.saved_oldest).forEachIndexed { index, (value, label) ->
-                        SegmentedButton(
-                            selected = newestFirst == value,
-                            onClick = { onSortChange(value) },
-                            shape = SegmentedButtonDefaults.itemShape(index, 2),
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = c.ink,
-                                activeContentColor = c.canvas,
-                                inactiveContainerColor = c.surface,
-                                inactiveContentColor = c.ink,
-                                activeBorderColor = c.line,
-                                inactiveBorderColor = c.line,
-                            ),
-                            icon = {},
-                        ) { Text(stringResource(label)) }
-                    }
+                SectionLabel(stringResource(R.string.saved_sort), Modifier.padding(top = 8.dp, bottom = 8.dp))
+                SegmentedPill(listOf(true, false), newestFirst, onSortChange) { value, isSelected ->
+                    Text(
+                        stringResource(if (value) R.string.saved_newest else R.string.saved_oldest),
+                        color = c.ink,
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1,
+                    )
                 }
                 if (categories.isNotEmpty()) {
-                    SectionLabel(stringResource(R.string.filter_category), Modifier.padding(top = 20.dp, bottom = 6.dp))
+                    SectionLabel(stringResource(R.string.filter_category), Modifier.padding(top = 20.dp, bottom = 8.dp))
                     CategoryRow(stringResource(R.string.filter_all_categories), null, draft == null) { draft = null }
                     categories.forEach { category ->
                         CategoryRow(category.name, category.colorHex, draft == category.id) { draft = category.id }
@@ -115,18 +103,19 @@ fun LibraryFilterSheet(
 private fun CategoryRow(title: String, colorHex: String?, selected: Boolean, onClick: () -> Unit) {
     val c = Brand.colors
     Surface(
-        shape = RoundedCornerShape(Brand.controlRadius),
-        color = if (selected) c.surface else c.canvas,
-        border = if (selected) BorderStroke(1.dp, c.line) else null,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        shape = CircleShape,
+        color = if (selected) c.accentSoft else c.canvas,
+        border = if (selected) BorderStroke(1.5.dp, c.accent) else null,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             if (colorHex != null) {
                 CategoryDot(colorHex)
-                Spacer(Modifier.width(10.dp))
+                Spacer(Modifier.width(12.dp))
             }
             Text(title, color = c.ink, fontSize = 16.sp, maxLines = 1, modifier = Modifier.weight(1f))
-            if (selected) Icon(Icons.Filled.CheckCircle, null, tint = c.ink, modifier = Modifier.size(20.dp))
+            if (selected) Icon(Icons.Filled.CheckCircle, null, tint = c.accentText, modifier = Modifier.size(20.dp))
         }
     }
 }

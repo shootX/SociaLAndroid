@@ -1,5 +1,10 @@
 package com.ich.socialsave.ui.collections
 
+import com.ich.socialsave.ui.components.HeaderIconButton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,8 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +31,6 @@ import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -124,7 +126,7 @@ fun CollectionsScreen(onOpen: (CollectionKind) -> Unit) {
             }
         }
         buildList {
-            add(Tile(CollectionKind.Favorites, "", favorites, covers["favorites"], Icons.Filled.Star, c.ink))
+            add(Tile(CollectionKind.Favorites, "", favorites, covers["favorites"], Icons.Filled.Star, c.mint))
             categories.forEach {
                 add(
                     Tile(
@@ -141,19 +143,20 @@ fun CollectionsScreen(onOpen: (CollectionKind) -> Unit) {
     }
 
     Column(Modifier.fillMaxSize().background(c.canvas).statusBarsPadding()) {
-        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.heightIn(min = 44.dp).padding(start = 16.dp, end = 16.dp, top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ScreenTitle(stringResource(R.string.categories_title), Modifier.weight(1f))
             if (categories.isNotEmpty()) {
-                TextButton(onClick = { managerOpen = true }) {
-                    Text(stringResource(R.string.action_edit), color = c.ink, fontSize = 16.sp)
-                }
+                HeaderIconButton(Icons.Outlined.Edit, stringResource(R.string.action_edit)) { managerOpen = true }
             }
         }
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(tiles, key = { it.kind?.route ?: "new" }) { tile ->
                 if (tile.kind == null) {
@@ -164,7 +167,9 @@ fun CollectionsScreen(onOpen: (CollectionKind) -> Unit) {
                         CollectionKind.Uncategorized -> stringResource(R.string.categories_none)
                         else -> tile.title
                     }
-                    CollectionTile(title, tile.count, tile.cover, tile.icon, tile.tint) { onOpen(tile.kind) }
+                    CollectionTile(title, tile.count, tile.cover, tile.icon, tile.tint, tile.kind == CollectionKind.Favorites) {
+                        onOpen(tile.kind)
+                    }
                 }
             }
         }
@@ -179,59 +184,94 @@ fun CollectionsScreen(onOpen: (CollectionKind) -> Unit) {
 }
 
 @Composable
-private fun CollectionTile(title: String, count: Int, cover: String?, icon: ImageVector, tint: Color, onClick: () -> Unit) {
+private fun CollectionTile(
+    title: String,
+    count: Int,
+    cover: String?,
+    icon: ImageVector,
+    tint: Color,
+    highlighted: Boolean,
+    onClick: () -> Unit,
+) {
     val c = Brand.colors
     val context = LocalContext.current
     val shape = RoundedCornerShape(Brand.cardRadius)
     val file = remember(cover) { context.container.thumbnails.file(cover) }
-    Column(Modifier.clickable(onClick = onClick)) {
-        Box(
-            Modifier.fillMaxWidth().aspectRatio(1f).clip(shape)
-                .background(if (file == null) tint.copy(alpha = 0.12f) else c.surface)
-                .border(1.dp, c.line.copy(alpha = 0.7f), shape),
-            contentAlignment = Alignment.Center,
-        ) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(TileHeight)
+            .clip(shape)
+            .background(c.surface)
+            .border(if (highlighted) 2.dp else 1.dp, if (highlighted) c.accent else c.line, shape)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+    ) {
+        Text(
+            stringResource(R.string.categories_count, count),
+            color = c.gray,
+            fontSize = 13.sp,
+            maxLines = 1,
+            modifier = Modifier.align(Alignment.TopStart).background(c.muted, RoundedCornerShape(12.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+        // Sits between the count and a title that may take two lines.
+        Box(Modifier.align(Alignment.TopEnd).padding(top = 30.dp).size(84.dp), contentAlignment = Alignment.Center) {
             if (file != null) {
-                AsyncImage(file, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                Box(
-                    Modifier.align(Alignment.BottomStart).padding(8.dp).size(28.dp)
-                        .background(tint, CircleShape)
-                        .border(1.5.dp, Color.White.copy(alpha = 0.8f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(icon, null, tint = Color.White, modifier = Modifier.size(14.dp))
-                }
+                AsyncImage(file, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)))
             } else {
-                Icon(icon, null, tint = tint, modifier = Modifier.size(34.dp))
+                Icon(icon, null, tint = tint, modifier = Modifier.size(64.dp))
             }
         }
-        Spacer(Modifier.height(8.dp))
-        Text(title, color = c.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(stringResource(R.string.categories_count, count), color = c.gray, fontSize = 13.sp)
+        Text(
+            title,
+            color = c.ink,
+            fontSize = 16.sp,
+            lineHeight = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.align(Alignment.BottomStart),
+        )
     }
 }
 
 @Composable
 private fun NewCollectionTile(onClick: () -> Unit) {
     val c = Brand.colors
-    Column(Modifier.clickable(onClick = onClick)) {
-        Box(
-            Modifier.fillMaxWidth().aspectRatio(1f).drawBehind {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .height(TileHeight)
+            .clip(RoundedCornerShape(Brand.cardRadius))
+            .clickable(onClick = onClick)
+            .drawBehind {
                 val stroke = 1.5.dp.toPx()
                 drawRoundRect(
-                    color = c.line,
+                    color = c.iconMuted,
                     topLeft = androidx.compose.ui.geometry.Offset(stroke / 2, stroke / 2),
                     size = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke),
                     cornerRadius = CornerRadius(Brand.cardRadius.toPx()),
                     style = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))),
                 )
-            },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.Add, null, tint = c.gray, modifier = Modifier.size(30.dp))
+            }
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+    ) {
+        Box(Modifier.size(48.dp).background(c.mint, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Add, null, tint = c.onMint, modifier = Modifier.size(24.dp))
         }
-        Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.categories_new), color = c.gray, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-        Text(" ", fontSize = 13.sp)
+        Text(
+            stringResource(R.string.categories_new),
+            color = c.ink,
+            fontSize = 16.sp,
+            lineHeight = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
+
+private val TileHeight = 184.dp

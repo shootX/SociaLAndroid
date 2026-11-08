@@ -14,6 +14,7 @@ import com.ich.socialsave.account.deviceName
 import com.ich.socialsave.ads.NativeAdsController
 import com.ich.socialsave.core.ShortLinkExpander
 import com.ich.socialsave.data.AppDatabase
+import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.data.AppSettings
 import com.ich.socialsave.data.LibraryRepository
 import com.ich.socialsave.data.ThumbnailStore
@@ -30,6 +31,10 @@ import java.util.concurrent.TimeUnit
 class SocialSaveApplication : Application() {
     lateinit var container: AppContainer
         private set
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppLocale.wrap(base))
+    }
 
     override fun onCreate() {
         super.onCreate()

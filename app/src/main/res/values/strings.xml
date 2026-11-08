@@ -15,7 +15,6 @@
     <string name="action_copy_link">Copy Link</string>
     <string name="action_create">Create</string>
     <string name="action_delete">Delete</string>
-    <string name="action_deselect_all">Deselect All</string>
     <string name="action_details">Details</string>
     <string name="action_done">Done</string>
     <string name="action_edit">Edit</string>
@@ -25,7 +24,6 @@
     <string name="action_remove_favorite">Remove Favorite</string>
     <string name="action_save">Save</string>
     <string name="action_select">Select</string>
-    <string name="action_select_all">Select All</string>
     <string name="action_share">Share</string>
     <string name="ad_label">Ad</string>
     <string name="ad_open">Open</string>
@@ -198,4 +196,15 @@
     <string name="account_delete_confirm_body">This permanently deletes your account and every save on our server. Saves on this phone are removed too.</string>
     <string name="account_delete_confirm_action">Delete</string>
     <string name="account_delete_failed">Couldn\'t delete your account. Check your connection and try again.</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_georgian" translatable="false">ქართული</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_russian" translatable="false">Русский</string>
+    <string name="selection_favorite">Favorite</string>
+    <string name="selection_unfavorite">Unfavorite</string>
+    <string name="selection_move">Move</string>
+    <string name="detail_copy">Copy</string>
+    <string name="selection_all">All</string>
+    <string name="selection_clear">Clear</string>
 </resources>

@@ -1,7 +1,14 @@
 package com.ich.socialsave.ui.library
 
+import com.ich.socialsave.ui.components.bottomPanel
+import com.ich.socialsave.ui.components.PillTextButton
+import com.ich.socialsave.ui.components.BrandLogo
+import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,18 +32,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,6 +60,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -117,7 +122,6 @@ fun LibraryScreen(
     val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
     val newestFirst by container.settings.newestFirst.collectAsStateWithLifecycle()
 
-    var searchVisible by rememberSaveable { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
     var libraryScope by remember { mutableStateOf<LibraryScope>(LibraryScope.All) }
     var categoryFilter by rememberSaveable { mutableStateOf<String?>(null) }
@@ -137,10 +141,7 @@ fun LibraryScreen(
         selection = selection?.intersect(allPosts.map { it.id }.toSet())
     }
     BackHandler(enabled = selection != null) { selection = null }
-    BackHandler(enabled = selection == null && searchVisible) {
-        searchVisible = false
-        searchText = ""
-    }
+    BackHandler(enabled = selection == null && searchText.isNotEmpty()) { searchText = "" }
 
     val query = searchText.trim()
     val visible = remember(allPosts, libraryScope, categoryFilter, query, newestFirst, lookup) {
@@ -176,37 +177,30 @@ fun LibraryScreen(
 
     Box(Modifier.fillMaxSize().background(c.canvas)) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)) {
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
                 val current = selection
                 if (current != null) {
                     val visibleIds = visible.map { it.id }.toSet()
                     val allSelected = visibleIds.isNotEmpty() && current.containsAll(visibleIds)
-                    Row(Modifier.fillMaxWidth().height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(onClick = { selection = null }) {
-                            Text(stringResource(R.string.action_cancel), color = c.ink, fontSize = 16.sp)
-                        }
-                        Spacer(Modifier.weight(1f))
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        HeaderIconButton(Icons.Filled.Close, stringResource(R.string.action_cancel)) { selection = null }
+                        Spacer(Modifier.width(12.dp))
                         Text(
                             stringResource(R.string.library_selected_count, current.size),
-                            color = c.ink, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                            color = c.ink, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+                            modifier = Modifier.weight(1f),
                         )
-                        Spacer(Modifier.weight(1f))
-                        TextButton(onClick = { selection = if (allSelected) emptySet() else visibleIds }) {
-                            Text(
-                                stringResource(if (allSelected) R.string.action_deselect_all else R.string.action_select_all),
-                                color = c.ink, fontSize = 16.sp,
-                            )
-                        }
+                        Spacer(Modifier.width(8.dp))
+                        PillTextButton(
+                            stringResource(if (allSelected) R.string.selection_clear else R.string.selection_all),
+                            onClick = { selection = if (allSelected) emptySet() else visibleIds },
+                        )
                     }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "SocialSave", color = c.ink, fontSize = 28.sp, fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.4).sp, maxLines = 1, modifier = Modifier.weight(1f),
-                        )
+                        BrandLogo(Modifier.weight(1f))
                         if (allPosts.isNotEmpty()) {
                             HeaderIconButton(Icons.Outlined.CheckCircle, stringResource(R.string.action_select)) {
-                                searchVisible = false
                                 searchText = ""
                                 selection = emptySet()
                             }
@@ -215,28 +209,19 @@ fun LibraryScreen(
                         HeaderIconButton(Icons.Filled.FilterList, stringResource(R.string.a11y_filter), active = categoryFilter != null) {
                             filterOpen = true
                         }
-                        Spacer(Modifier.width(8.dp))
-                        HeaderIconButton(
-                            if (searchVisible) Icons.Filled.Close else Icons.Filled.Search,
-                            stringResource(R.string.a11y_search),
-                            active = searchVisible,
-                        ) {
-                            searchVisible = !searchVisible
-                            if (!searchVisible) searchText = ""
-                        }
                     }
-                }
-                AnimatedVisibility(searchVisible && selection == null) {
-                    SearchField(
-                        placeholder = stringResource(R.string.search_placeholder_library),
-                        value = searchText,
-                        onValueChange = { searchText = it },
-                        modifier = Modifier.padding(top = 12.dp),
-                    )
+                    if (allPosts.isNotEmpty()) {
+                        SearchField(
+                            placeholder = stringResource(R.string.search_placeholder_library),
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            modifier = Modifier.padding(top = 16.dp),
+                        )
+                    }
                 }
             }
 
-            if (allPosts.isNotEmpty()) {
+            if (allPosts.isNotEmpty() && selection == null) {
                 ScopeBar(allPosts, libraryScope) { libraryScope = it }
             }
             categoryFilter?.let(lookup::get)?.let { category ->
@@ -268,7 +253,7 @@ fun LibraryScreen(
         }
 
         if (allPosts.isNotEmpty() && selection == null) {
-            Box(Modifier.align(Alignment.BottomEnd).padding(end = 20.dp, bottom = 16.dp)) {
+            Box(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp)) {
                 FloatingAddButton(stringResource(R.string.a11y_add_link)) { pasteOpen = true }
             }
         }
@@ -340,7 +325,7 @@ private fun ScopeBar(posts: List<SavedPost>, current: LibraryScope, onSelect: (L
         if (current is LibraryScope.Platform && current.platform !in counts) add(current)
     }
     LazyRow(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 6.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(scopes, key = { it.toString() }) { item ->
@@ -357,21 +342,21 @@ private fun ScopeBar(posts: List<SavedPost>, current: LibraryScope, onSelect: (L
 @Composable
 private fun ActiveFilterChip(category: Category, onClear: () -> Unit) {
     val c = Brand.colors
-    Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 2.dp)) {
-        Surface(shape = CircleShape, color = c.surface, border = BorderStroke(1.dp, c.line)) {
+    Row(Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
+        Surface(shape = CircleShape, color = c.accentSoft, border = BorderStroke(1.5.dp, c.accent)) {
             Row(
-                Modifier.height(Brand.chipHeight).padding(start = 12.dp, end = 6.dp),
+                Modifier.height(Brand.chipHeight).padding(start = 16.dp, end = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CategoryDot(category.colorHex)
                 Spacer(Modifier.width(8.dp))
-                Text(category.name, color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-                Spacer(Modifier.width(6.dp))
+                Text(category.name, color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Spacer(Modifier.width(8.dp))
                 Box(
-                    Modifier.size(22.dp).background(c.line, CircleShape).clickable(onClick = onClear),
+                    Modifier.size(24.dp).clip(CircleShape).background(c.surface).clickable(onClick = onClear),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Filled.Close, stringResource(R.string.a11y_clear_filter), tint = c.gray, modifier = Modifier.size(12.dp))
+                    Icon(Icons.Filled.Close, stringResource(R.string.a11y_clear_filter), tint = c.ink, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -454,19 +439,18 @@ private fun SelectionActionBar(
     var moveOpen by remember { mutableStateOf(false) }
     val enabled = selected.isNotEmpty()
 
-    Column(modifier.fillMaxWidth().background(c.surface).navigationBarsPadding()) {
-        HorizontalDivider(color = c.line)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp)) {
+    Column(modifier.fillMaxWidth().bottomPanel().navigationBarsPadding()) {
+        Row(Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 16.dp)) {
             BarButton(
-                stringResource(if (allFavorite) R.string.action_remove_favorite else R.string.action_add_favorite),
+                stringResource(if (allFavorite) R.string.selection_unfavorite else R.string.selection_favorite),
                 if (allFavorite) Icons.Outlined.StarOutline else Icons.Outlined.Star,
                 enabled,
                 Modifier.weight(1f),
             ) { onFavorite(selected, !allFavorite) }
             Box(Modifier.weight(1f)) {
                 BarButton(
-                    stringResource(R.string.action_move_to_category),
-                    Icons.Filled.Folder,
+                    stringResource(R.string.selection_move),
+                    Icons.Outlined.Folder,
                     enabled && categories.isNotEmpty(),
                     Modifier.fillMaxWidth(),
                 ) { moveOpen = true }
@@ -477,8 +461,8 @@ private fun SelectionActionBar(
                     }
                 }
             }
-            BarButton(stringResource(R.string.action_share), Icons.Filled.Share, enabled, Modifier.weight(1f)) { onShare(selected) }
-            BarButton(stringResource(R.string.action_delete), Icons.Filled.Delete, enabled, Modifier.weight(1f), tint = c.danger) { onDelete(selected) }
+            BarButton(stringResource(R.string.action_share), Icons.Outlined.Share, enabled, Modifier.weight(1f)) { onShare(selected) }
+            BarButton(stringResource(R.string.action_delete), Icons.Outlined.Delete, enabled, Modifier.weight(1f), tint = c.danger) { onDelete(selected) }
         }
     }
 }
@@ -495,13 +479,21 @@ private fun BarButton(
     Column(
         modifier = modifier
             .alpha(if (enabled) 1f else 0.4f)
+            .clip(RoundedCornerShape(12.dp))
             .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icon, null, tint = tint, modifier = Modifier.size(22.dp))
         Spacer(Modifier.height(4.dp))
-        Text(title, color = tint, fontSize = 10.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+        Text(
+            title,
+            color = tint,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

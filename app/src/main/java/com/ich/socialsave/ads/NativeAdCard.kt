@@ -52,6 +52,7 @@ private class AdCardViews(context: Context) {
     private val advertiser = TextView(context)
     private val cta = TextView(context)
     private val mediaFrame = SquareFrameLayout(context)
+    private val column = LinearLayout(context)
 
     init {
         root.tag = this
@@ -68,16 +69,15 @@ private class AdCardViews(context: Context) {
             },
         )
 
-        badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
-        badge.typeface = Typeface.DEFAULT_BOLD
-        badge.setPadding(dp(8), dp(3), dp(8), dp(3))
+        badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        badge.setPadding(dp(10), dp(4), dp(10), dp(4))
 
-        headline.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+        headline.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         headline.typeface = Typeface.DEFAULT_BOLD
         headline.maxLines = 2
         headline.ellipsize = TextUtils.TruncateAt.END
 
-        advertiser.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+        advertiser.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
         advertiser.maxLines = 1
         advertiser.ellipsize = TextUtils.TruncateAt.END
 
@@ -87,12 +87,24 @@ private class AdCardViews(context: Context) {
         cta.maxLines = 1
         cta.setPadding(dp(12), dp(7), dp(12), dp(7))
 
-        val column = LinearLayout(context).apply {
+        column.apply {
             orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(8), dp(8), dp(12))
+            fun textParams(top: Int) = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
+                topMargin = dp(top)
+                marginStart = dp(4)
+                marginEnd = dp(4)
+            }
             addView(mediaFrame, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
-            addView(headline, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(10) })
-            addView(advertiser, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply { topMargin = dp(2) })
-            addView(cta, LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply { topMargin = dp(6) })
+            addView(headline, textParams(8))
+            addView(advertiser, textParams(4))
+            addView(
+                cta,
+                LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
+                    topMargin = dp(8)
+                    marginStart = dp(4)
+                },
+            )
         }
         root.addView(column, FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
 
@@ -104,24 +116,27 @@ private class AdCardViews(context: Context) {
     }
 
     fun bind(ad: NativeAd, brand: BrandColors, badgeText: String, fallbackCta: String) {
-        val radius = 14 * density
-        mediaFrame.background = GradientDrawable().apply {
-            cornerRadius = radius
+        column.background = GradientDrawable().apply {
+            cornerRadius = 20 * density
             setColor(brand.surface.toArgb())
             setStroke(dp(1), brand.line.toArgb())
         }
+        mediaFrame.background = GradientDrawable().apply {
+            cornerRadius = 14 * density
+            setColor(brand.muted.toArgb())
+        }
         badge.text = badgeText
-        badge.setTextColor(android.graphics.Color.WHITE)
+        badge.setTextColor(brand.ink.toArgb())
         badge.background = GradientDrawable().apply {
-            cornerRadius = 100 * density
-            setColor(0x8C000000.toInt())
+            cornerRadius = 12 * density
+            setColor(brand.canvas.toArgb())
         }
         headline.setTextColor(brand.ink.toArgb())
         advertiser.setTextColor(brand.gray.toArgb())
-        cta.setTextColor(brand.canvas.toArgb())
+        cta.setTextColor(brand.onAction.toArgb())
         cta.background = GradientDrawable().apply {
             cornerRadius = 100 * density
-            setColor(brand.ink.toArgb())
+            setColor(brand.action.toArgb())
         }
 
         headline.text = ad.headline

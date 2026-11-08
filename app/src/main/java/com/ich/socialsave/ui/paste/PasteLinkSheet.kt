@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +25,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,7 +61,11 @@ import com.ich.socialsave.R
 import com.ich.socialsave.container
 import com.ich.socialsave.core.UrlNormalizer
 import com.ich.socialsave.data.SaveResult
+import com.ich.socialsave.ui.components.AccentHeadline
+import com.ich.socialsave.ui.components.FieldDivider
+import com.ich.socialsave.ui.components.PillRow
 import com.ich.socialsave.ui.components.PrimaryButton
+import com.ich.socialsave.ui.components.SectionLabel
 import com.ich.socialsave.ui.components.archiveField
 import com.ich.socialsave.ui.theme.Brand
 import kotlinx.coroutines.launch
@@ -113,92 +116,86 @@ fun PasteLinkSheet(onDismiss: () -> Unit) {
             if (saved) {
                 SavedSuccess(onDone = onDismiss)
             } else {
-            Text(
-                stringResource(R.string.paste_title), color = c.ink, fontSize = 28.sp,
-                fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.paste_subtitle), color = c.gray, fontSize = 16.sp)
-            Spacer(Modifier.height(28.dp))
+                AccentHeadline(stringResource(R.string.paste_title), fontSize = 28.sp, lineHeight = 36.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.paste_subtitle), color = c.gray, fontSize = 16.sp, lineHeight = 24.sp)
+                Spacer(Modifier.height(24.dp))
 
-            Row(
-                Modifier.fillMaxWidth().archiveField().padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Filled.Link, null, tint = if (url.isBlank()) c.gray else c.ink, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(10.dp))
-                Box(Modifier.weight(1f)) {
-                    if (url.isEmpty()) Text("https://…", color = c.gray, fontSize = 16.sp)
-                    BasicTextField(
-                        value = url,
-                        onValueChange = { url = it; error = null },
-                        singleLine = true,
-                        textStyle = TextStyle(color = c.ink, fontSize = 16.sp),
-                        cursorBrush = SolidColor(c.ink),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done, autoCorrectEnabled = false),
-                        keyboardActions = KeyboardActions(onDone = { save() }),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (url.isNotEmpty()) {
-                    IconButton(onClick = { url = ""; error = null }, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Filled.Cancel, null, tint = c.gray, modifier = Modifier.size(18.dp))
-                    }
-                }
-            }
-
-            if (categories.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                Box {
-                    val selected = categories.firstOrNull { it.id == categoryId }
-                    Row(
-                        Modifier.fillMaxWidth().archiveField()
-                            .clickable { categoryMenu = true }
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            selected?.name ?: stringResource(R.string.categories_none),
-                            color = if (selected == null) c.gray else c.ink,
-                            fontSize = 16.sp,
-                            maxLines = 1,
-                            modifier = Modifier.weight(1f),
+                SectionLabel(stringResource(R.string.detail_link))
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    Modifier.fillMaxWidth().height(56.dp).archiveField(highlighted = url.isNotBlank()).padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Link, null, tint = c.ink, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(12.dp))
+                    FieldDivider()
+                    Spacer(Modifier.width(12.dp))
+                    Box(Modifier.weight(1f)) {
+                        if (url.isEmpty()) Text("https://…", color = c.gray, fontSize = 16.sp)
+                        BasicTextField(
+                            value = url,
+                            onValueChange = { url = it; error = null },
+                            singleLine = true,
+                            textStyle = TextStyle(color = c.ink, fontSize = 16.sp),
+                            cursorBrush = SolidColor(c.ink),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done, autoCorrectEnabled = false),
+                            keyboardActions = KeyboardActions(onDone = { save() }),
+                            modifier = Modifier.fillMaxWidth(),
                         )
-                        Icon(Icons.Filled.UnfoldMore, stringResource(R.string.filter_category), tint = c.gray, modifier = Modifier.size(20.dp))
                     }
-                    DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.categories_none)) },
-                            onClick = { categoryId = null; categoryMenu = false },
-                        )
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name) },
-                                onClick = { categoryId = category.id; categoryMenu = false },
-                            )
+                    if (url.isNotEmpty()) {
+                        IconButton(onClick = { url = ""; error = null }, modifier = Modifier.size(24.dp)) {
+                            Icon(Icons.Filled.Cancel, null, tint = c.gray, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
-            }
 
-            error?.let {
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.ErrorOutline, null, tint = c.danger, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(it, color = c.danger, fontSize = 14.sp)
+                if (categories.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    SectionLabel(stringResource(R.string.filter_category))
+                    Spacer(Modifier.height(8.dp))
+                    Box {
+                        val selected = categories.firstOrNull { it.id == categoryId }
+                        PillRow(
+                            icon = Icons.Outlined.Folder,
+                            title = selected?.name ?: stringResource(R.string.categories_choose),
+                            subtitle = null,
+                            onClick = { categoryMenu = true },
+                        )
+                        DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.categories_none)) },
+                                onClick = { categoryId = null; categoryMenu = false },
+                            )
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text(category.name) },
+                                    onClick = { categoryId = category.id; categoryMenu = false },
+                                )
+                            }
+                        }
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
-            PrimaryButton(stringResource(R.string.action_save), onClick = { save() }, enabled = url.isNotBlank() && !saving)
-            Spacer(Modifier.height(24.dp))
-            Text(
-                stringResource(R.string.paste_supports),
-                color = c.gray, fontSize = 13.sp, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(24.dp))
+                error?.let {
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.ErrorOutline, null, tint = c.danger, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(it, color = c.danger, fontSize = 13.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+                PrimaryButton(stringResource(R.string.action_save), onClick = { save() }, enabled = url.isNotBlank() && !saving)
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    stringResource(R.string.paste_supports),
+                    color = c.gray, fontSize = 13.sp, lineHeight = 18.sp, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -220,17 +217,17 @@ private fun SavedSuccess(onDone: () -> Unit) {
     }
     Column(Modifier.fillMaxWidth().padding(top = 24.dp)) {
         Box(
-            Modifier.size(72.dp).scale(scale).background(c.ink, CircleShape),
+            Modifier.size(72.dp).scale(scale).background(c.mint, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Filled.Check, null, tint = c.canvas, modifier = Modifier.size(32.dp))
+            Icon(Icons.Filled.Check, null, tint = c.onMint, modifier = Modifier.size(32.dp))
         }
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.success_title), color = c.ink, fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.success_title), color = c.ink, fontSize = 28.sp, fontWeight = FontWeight.Bold, letterSpacing = (-0.4).sp)
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.success_subtitle), color = c.gray, fontSize = 16.sp)
+        Text(stringResource(R.string.success_subtitle), color = c.gray, fontSize = 16.sp, lineHeight = 24.sp)
         Spacer(Modifier.height(40.dp))
         PrimaryButton(stringResource(R.string.success_view_saved), onClick = onDone)
-        Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }

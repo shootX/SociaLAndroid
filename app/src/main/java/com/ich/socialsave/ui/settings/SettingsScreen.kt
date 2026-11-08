@@ -1,5 +1,11 @@
 package com.ich.socialsave.ui.settings
 
+import com.ich.socialsave.ui.components.SegmentedPill
+import com.ich.socialsave.ui.components.PillRow
+import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Notifications
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -27,21 +33,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -77,10 +79,10 @@ import com.ich.socialsave.account.AccountUser
 import com.ich.socialsave.account.SignOutResult
 import com.ich.socialsave.account.SyncStatus
 import com.ich.socialsave.container
+import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.data.Appearance
 import com.ich.socialsave.ui.account.SignInSheet
 import com.ich.socialsave.ui.components.ScreenTitle
-import com.ich.socialsave.ui.components.SectionLabel
 import com.ich.socialsave.ui.components.openLink
 import com.ich.socialsave.ui.theme.Brand
 import com.ich.socialsave.util.RelativeTime
@@ -108,6 +110,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     val reminderDay by settings.reminderDay.collectAsStateWithLifecycle()
     val reminderMinutes by settings.reminderMinutes.collectAsStateWithLifecycle()
     val appearance by settings.appearance.collectAsStateWithLifecycle()
+    val language by settings.language.collectAsStateWithLifecycle()
     val privacyRequired by container.ads.privacyOptionsRequired.collectAsStateWithLifecycle()
 
     val account by container.account.state.collectAsStateWithLifecycle()
@@ -148,6 +151,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     var canNotify by remember { mutableStateOf(ReminderScheduler.canNotify(context)) }
     var dayMenu by remember { mutableStateOf(false) }
     var timeDialog by remember { mutableStateOf(false) }
+    var languageDialog by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canNotify = ReminderScheduler.canNotify(context) }
 
     // Keep reminders on even when denied, so the "blocked" footer and the open-settings row explain how to fix it.
@@ -168,13 +172,17 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     }
 
     Column(Modifier.fillMaxSize().background(c.canvas).statusBarsPadding()) {
-        ScreenTitle(stringResource(R.string.tab_settings), Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp))
+        ScreenTitle(stringResource(R.string.tab_settings), Modifier.padding(start = 16.dp, top = 12.dp))
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-            Group(stringResource(R.string.account_section)) {
+            Group(stringResource(R.string.account_section), bare = account == AccountState.SignedOut) {
                 when (val state = account) {
-                    AccountState.SignedOut -> NavRow(Icons.Filled.Sync, stringResource(R.string.account_sign_in_row)) {
-                        signInSheet = true
-                    }
+                    AccountState.SignedOut -> PillRow(
+                        icon = Icons.Filled.Sync,
+                        title = stringResource(R.string.account_sign_in_row),
+                        subtitle = null,
+                        onClick = { signInSheet = true },
+                        highlightIcon = true,
+                    )
                     is AccountState.SignedIn -> {
                         AccountHeader(
                             state.user,
@@ -205,15 +213,16 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
 
             Group(stringResource(R.string.settings_reminders), footer = stringResource(if (blocked) R.string.settings_reminders_blocked else R.string.settings_reminders_footer)) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Notifications, null, tint = c.ink, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Outlined.Notifications, null, tint = c.ink, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(12.dp))
                     Text(stringResource(R.string.settings_reminders_toggle), color = c.ink, fontSize = 16.sp, modifier = Modifier.weight(1f))
                     Switch(
                         checked = remindersEnabled && canNotify,
                         onCheckedChange = ::setReminders,
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = c.canvas,
-                            checkedTrackColor = c.ink,
+                            checkedThumbColor = if (c.isDark) c.onMint else Color.White,
+                            checkedTrackColor = c.accent,
+                            checkedBorderColor = c.accent,
                             uncheckedThumbColor = c.gray,
                             uncheckedTrackColor = c.line,
                             uncheckedBorderColor = c.line,
@@ -256,39 +265,28 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 }
             }
 
-            Group(stringResource(R.string.settings_appearance)) {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(12.dp)) {
-                    val options = listOf(
-                        Appearance.SYSTEM to R.string.appearance_system,
-                        Appearance.LIGHT to R.string.appearance_light,
-                        Appearance.DARK to R.string.appearance_dark,
-                    )
-                    options.forEachIndexed { index, (value, label) ->
-                        SegmentedButton(
-                            selected = appearance == value,
-                            onClick = { settings.setAppearance(value) },
-                            shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = c.ink,
-                                activeContentColor = c.canvas,
-                                inactiveContainerColor = c.surface,
-                                inactiveContentColor = c.ink,
-                                activeBorderColor = c.line,
-                                inactiveBorderColor = c.line,
-                            ),
-                            icon = {},
-                        ) { Text(stringResource(label), maxLines = 1) }
-                    }
+            Group(stringResource(R.string.settings_appearance), bare = true) {
+                val icons = mapOf(
+                    Appearance.SYSTEM to (Icons.Outlined.PhoneAndroid to R.string.appearance_system),
+                    Appearance.LIGHT to (Icons.Outlined.LightMode to R.string.appearance_light),
+                    Appearance.DARK to (Icons.Outlined.DarkMode to R.string.appearance_dark),
+                )
+                SegmentedPill(icons.keys.toList(), appearance, settings::setAppearance) { option, isSelected ->
+                    val (icon, label) = icons.getValue(option)
+                    Icon(icon, stringResource(label), tint = if (isSelected) c.ink else c.gray, modifier = Modifier.size(22.dp))
                 }
             }
 
-            Group(null) {
-                NavRow(Icons.Filled.TouchApp, stringResource(R.string.settings_one_tap_save), onOpenGuide)
-                Divider()
-                NavRow(Icons.AutoMirrored.Filled.HelpOutline, stringResource(R.string.settings_how_to_save), onShowOnboarding)
-            }
-
             Group(stringResource(R.string.settings_about)) {
+                ValueRow(
+                    stringResource(R.string.settings_language),
+                    languageLabel(language),
+                ) { languageDialog = true }
+                Divider()
+                NavRow(null, stringResource(R.string.settings_one_tap_save), onOpenGuide)
+                Divider()
+                NavRow(null, stringResource(R.string.settings_how_to_save), onShowOnboarding)
+                Divider()
                 ValueRow(stringResource(R.string.settings_version), BuildConfig.VERSION_NAME, null)
                 Divider()
                 ValueRow(stringResource(R.string.settings_build), BuildConfig.VERSION_CODE.toString(), null)
@@ -303,7 +301,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                     }
                 }
             }
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 
@@ -343,6 +341,44 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
         }
     }
 
+    if (languageDialog) {
+        AlertDialog(
+            onDismissRequest = { languageDialog = false },
+            containerColor = c.surface,
+            confirmButton = {
+                TextButton(onClick = { languageDialog = false }) { Text(stringResource(R.string.action_cancel), color = c.ink) }
+            },
+            title = { Text(stringResource(R.string.settings_language), color = c.ink) },
+            text = {
+                Column {
+                    AppLocale.CHOICES.forEach { tag ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable {
+                                    languageDialog = false
+                                    if (tag != language) {
+                                        settings.setLanguage(tag)
+                                        // Recreating the activity re-runs attachBaseContext with the new language.
+                                        (context as? Activity)?.recreate()
+                                    }
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = tag == language,
+                                onClick = null,
+                                colors = RadioButtonDefaults.colors(selectedColor = c.accent, unselectedColor = c.gray),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(languageLabel(tag), color = c.ink, fontSize = 16.sp)
+                        }
+                    }
+                }
+            },
+        )
+    }
+
     if (timeDialog) {
         val state = rememberTimePickerState(reminderMinutes / 60, reminderMinutes % 60, is24Hour = android.text.format.DateFormat.is24HourFormat(context))
         AlertDialog(
@@ -362,14 +398,15 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 TimePicker(
                     state = state,
                     colors = TimePickerDefaults.colors(
-                        clockDialColor = c.canvas,
-                        selectorColor = c.ink,
-                        timeSelectorSelectedContainerColor = c.ink,
-                        timeSelectorSelectedContentColor = c.canvas,
-                        timeSelectorUnselectedContainerColor = c.canvas,
+                        clockDialColor = c.muted,
+                        selectorColor = c.mint,
+                        clockDialSelectedContentColor = c.onMint,
+                        timeSelectorSelectedContainerColor = c.accentSoft,
+                        timeSelectorSelectedContentColor = c.ink,
+                        timeSelectorUnselectedContainerColor = c.muted,
                         timeSelectorUnselectedContentColor = c.ink,
-                        periodSelectorSelectedContainerColor = c.ink,
-                        periodSelectorSelectedContentColor = c.canvas,
+                        periodSelectorSelectedContainerColor = c.accentSoft,
+                        periodSelectorSelectedContentColor = c.ink,
                     ),
                 )
             },
@@ -387,24 +424,33 @@ fun legalUrl(path: String, language: String): String {
 }
 
 @Composable
-private fun Group(title: String?, footer: String? = null, content: @Composable ColumnScope.() -> Unit) {
+private fun Group(title: String?, footer: String? = null, bare: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val c = Brand.colors
-    Column(Modifier.padding(top = 20.dp)) {
-        if (title != null) SectionLabel(title, Modifier.padding(start = 16.dp, bottom = 8.dp))
+    val shape = RoundedCornerShape(Brand.cardRadius)
+    Column(Modifier.padding(top = 24.dp)) {
+        if (title != null) {
+            Text(title, color = c.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 12.dp))
+        }
         Column(
-            Modifier.fillMaxWidth()
-                .background(c.surface, RoundedCornerShape(Brand.controlRadius))
-                .border(1.dp, c.line, RoundedCornerShape(Brand.controlRadius)),
+            if (bare) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().clip(shape).background(c.surface).border(1.dp, c.line, shape),
             content = content,
         )
         if (footer != null) {
-            Text(footer, color = c.gray, fontSize = 13.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp))
+            Text(footer, color = c.gray, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp))
         }
     }
 }
 
 @Composable
 private fun Divider() = HorizontalDivider(color = Brand.colors.line, modifier = Modifier.padding(start = 16.dp))
+
+@Composable
+private fun languageLabel(tag: String): String = when (tag) {
+    AppLocale.GEORGIAN -> stringResource(R.string.language_georgian)
+    AppLocale.ENGLISH -> stringResource(R.string.language_english)
+    AppLocale.RUSSIAN -> stringResource(R.string.language_russian)
+    else -> stringResource(R.string.language_system)
+}
 
 @Composable
 private fun ValueRow(title: String, value: String, onClick: (() -> Unit)?) {
@@ -471,11 +517,11 @@ private fun AccountHeader(user: AccountUser, status: String, warning: Boolean) {
     val title = user.name?.takeIf { it.isNotBlank() } ?: user.email.orEmpty()
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         // The letter stays underneath: it shows while the photo loads and when there is none or it fails.
-        Box(Modifier.size(40.dp).clip(CircleShape).background(c.ink), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(48.dp).clip(CircleShape).background(c.mint), contentAlignment = Alignment.Center) {
             Text(
-                title.firstOrNull()?.uppercase() ?: "?",
-                color = c.canvas,
-                fontSize = 17.sp,
+                title.firstOrNull()?.titlecase() ?: "?",
+                color = c.onMint,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
             )
             if (!user.avatarUrl.isNullOrBlank()) {
@@ -486,7 +532,7 @@ private fun AccountHeader(user: AccountUser, status: String, warning: Boolean) {
         Column(Modifier.weight(1f)) {
             Text(title, color = c.ink, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1)
             if (!user.email.isNullOrBlank() && user.email != title) {
-                Text(user.email, color = c.gray, fontSize = 14.sp, maxLines = 1)
+                Text(user.email, color = c.gray, fontSize = 13.sp, maxLines = 1)
             }
             Spacer(Modifier.height(2.dp))
             Text(status, color = if (warning) c.danger else c.gray, fontSize = 13.sp)
@@ -522,15 +568,17 @@ private fun ConfirmDialog(
 }
 
 @Composable
-private fun NavRow(icon: ImageVector, title: String, onClick: () -> Unit) {
+private fun NavRow(icon: ImageVector?, title: String, onClick: () -> Unit) {
     val c = Brand.colors
     Row(
         Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, tint = c.ink, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(12.dp))
+        if (icon != null) {
+            Icon(icon, null, tint = c.ink, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(12.dp))
+        }
         Text(title, color = c.ink, fontSize = 16.sp, modifier = Modifier.weight(1f))
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = c.gray)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = c.gray, modifier = Modifier.size(20.dp))
     }
 }

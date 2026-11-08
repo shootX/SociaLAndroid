@@ -197,4 +197,9 @@
     <string name="account_delete_confirm_body">ეს სამუდამოდ წაშლის ანგარიშს და სერვერზე შენახულ ყველა ბმულს. ამ ტელეფონიდანაც წაიშლება.</string>
     <string name="account_delete_confirm_action">წაშლა</string>
     <string name="account_delete_failed">ანგარიშის წაშლა ვერ მოხერხდა. შეამოწმეთ ინტერნეტი და სცადეთ თავიდან.</string>
+    <string name="settings_language">ენა</string>
+    <string name="language_system">სისტემური</string>
+    <string name="language_georgian" translatable="false">ქართული</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_russian" translatable="false">Русский</string>
 </resources>

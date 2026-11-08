@@ -18,6 +18,16 @@ class AppSettings(context: Context) {
     )
     val appearance: StateFlow<Appearance> = _appearance.asStateFlow()
 
+    private val _language = MutableStateFlow(AppLocale.saved(context))
+    /** One of [AppLocale.CHOICES]; applied when the activity is created. */
+    val language: StateFlow<String> = _language.asStateFlow()
+
+    fun setLanguage(value: String) {
+        if (value !in AppLocale.CHOICES) return
+        prefs.edit { putString(AppLocale.KEY_LANGUAGE, value) }
+        _language.value = value
+    }
+
     private val _newestFirst = MutableStateFlow(prefs.getBoolean(KEY_NEWEST_FIRST, true))
     val newestFirst: StateFlow<Boolean> = _newestFirst.asStateFlow()
 

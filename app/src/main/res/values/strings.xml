@@ -198,4 +198,9 @@
     <string name="account_delete_confirm_body">This permanently deletes your account and every save on our server. Saves on this phone are removed too.</string>
     <string name="account_delete_confirm_action">Delete</string>
     <string name="account_delete_failed">Couldn\'t delete your account. Check your connection and try again.</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_georgian" translatable="false">ქართული</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_russian" translatable="false">Русский</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.ich.socialsave.ui
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -66,10 +67,15 @@ import com.ich.socialsave.ui.settings.SettingsScreen
 import com.ich.socialsave.ui.theme.SocialSaveTheme
 import com.ich.socialsave.ui.theme.isDarkTheme
 import com.ich.socialsave.ui.theme.LocalBrand
+import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.work.MetadataWorker
 
 class MainActivity : ComponentActivity() {
     private val pendingPostId = mutableStateOf<String?>(null)
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

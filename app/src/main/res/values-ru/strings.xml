@@ -197,4 +197,9 @@
     <string name="account_delete_confirm_body">Аккаунт и все сохранения на сервере будут удалены навсегда. С этого телефона тоже.</string>
     <string name="account_delete_confirm_action">Удалить</string>
     <string name="account_delete_failed">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
+    <string name="settings_language">Язык</string>
+    <string name="language_system">Системный</string>
+    <string name="language_georgian" translatable="false">ქართული</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_russian" translatable="false">Русский</string>
 </resources>

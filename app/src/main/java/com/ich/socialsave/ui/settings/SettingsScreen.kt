@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -77,6 +79,7 @@ import com.ich.socialsave.account.AccountUser
 import com.ich.socialsave.account.SignOutResult
 import com.ich.socialsave.account.SyncStatus
 import com.ich.socialsave.container
+import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.data.Appearance
 import com.ich.socialsave.ui.account.SignInSheet
 import com.ich.socialsave.ui.components.ScreenTitle
@@ -108,6 +111,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     val reminderDay by settings.reminderDay.collectAsStateWithLifecycle()
     val reminderMinutes by settings.reminderMinutes.collectAsStateWithLifecycle()
     val appearance by settings.appearance.collectAsStateWithLifecycle()
+    val language by settings.language.collectAsStateWithLifecycle()
     val privacyRequired by container.ads.privacyOptionsRequired.collectAsStateWithLifecycle()
 
     val account by container.account.state.collectAsStateWithLifecycle()
@@ -148,6 +152,7 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
     var canNotify by remember { mutableStateOf(ReminderScheduler.canNotify(context)) }
     var dayMenu by remember { mutableStateOf(false) }
     var timeDialog by remember { mutableStateOf(false) }
+    var languageDialog by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { canNotify = ReminderScheduler.canNotify(context) }
 
     // Keep reminders on even when denied, so the "blocked" footer and the open-settings row explain how to fix it.
@@ -282,6 +287,13 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 }
             }
 
+            Group(stringResource(R.string.settings_language)) {
+                ValueRow(
+                    stringResource(R.string.settings_language),
+                    languageLabel(language),
+                ) { languageDialog = true }
+            }
+
             Group(null) {
                 NavRow(Icons.Filled.TouchApp, stringResource(R.string.settings_one_tap_save), onOpenGuide)
                 Divider()
@@ -341,6 +353,44 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                 onDismiss = dismiss,
             ) { deleteAccount() }
         }
+    }
+
+    if (languageDialog) {
+        AlertDialog(
+            onDismissRequest = { languageDialog = false },
+            containerColor = c.surface,
+            confirmButton = {
+                TextButton(onClick = { languageDialog = false }) { Text(stringResource(R.string.action_cancel), color = c.ink) }
+            },
+            title = { Text(stringResource(R.string.settings_language), color = c.ink) },
+            text = {
+                Column {
+                    AppLocale.CHOICES.forEach { tag ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable {
+                                    languageDialog = false
+                                    if (tag != language) {
+                                        settings.setLanguage(tag)
+                                        // Recreating the activity re-runs attachBaseContext with the new language.
+                                        (context as? Activity)?.recreate()
+                                    }
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = tag == language,
+                                onClick = null,
+                                colors = RadioButtonDefaults.colors(selectedColor = c.ink, unselectedColor = c.gray),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(languageLabel(tag), color = c.ink, fontSize = 16.sp)
+                        }
+                    }
+                }
+            },
+        )
     }
 
     if (timeDialog) {
@@ -405,6 +455,14 @@ private fun Group(title: String?, footer: String? = null, content: @Composable C
 
 @Composable
 private fun Divider() = HorizontalDivider(color = Brand.colors.line, modifier = Modifier.padding(start = 16.dp))
+
+@Composable
+private fun languageLabel(tag: String): String = when (tag) {
+    AppLocale.GEORGIAN -> stringResource(R.string.language_georgian)
+    AppLocale.ENGLISH -> stringResource(R.string.language_english)
+    AppLocale.RUSSIAN -> stringResource(R.string.language_russian)
+    else -> stringResource(R.string.language_system)
+}
 
 @Composable
 private fun ValueRow(title: String, value: String, onClick: (() -> Unit)?) {

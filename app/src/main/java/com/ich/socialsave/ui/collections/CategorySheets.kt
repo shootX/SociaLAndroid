@@ -111,7 +111,7 @@ fun CategoryEditorSheet(existing: Category?, onDismiss: () -> Unit) {
             Spacer(Modifier.height(20.dp))
             SectionLabel(stringResource(R.string.categories_name))
             Spacer(Modifier.height(8.dp))
-            Box(Modifier.fillMaxWidth().archiveField().padding(horizontal = 14.dp, vertical = 13.dp)) {
+            Box(Modifier.fillMaxWidth().archiveField().padding(horizontal = 20.dp, vertical = 16.dp)) {
                 if (name.isEmpty()) Text(stringResource(R.string.categories_name_placeholder), color = c.gray, fontSize = 16.sp)
                 BasicTextField(
                     value = name,
@@ -131,7 +131,7 @@ fun CategoryEditorSheet(existing: Category?, onDismiss: () -> Unit) {
                     val selected = hex.equals(chosenHex, ignoreCase = true)
                     Box(
                         Modifier.size(38.dp).clip(CircleShape)
-                            .border(2.dp, if (selected) c.ink.copy(alpha = 0.6f) else Color.Transparent, CircleShape)
+                            .border(2.dp, if (selected) c.accent else Color.Transparent, CircleShape)
                             .padding(3.dp).clip(CircleShape)
                             .background(CategoryPalette.color(hex))
                             .clickable { colorHex = hex },
@@ -206,7 +206,7 @@ fun CategoriesManagerSheet(onDismiss: () -> Unit) {
                         ) {
                             val tint = CategoryPalette.color(category.colorHex)
                             Box(
-                                Modifier.size(32.dp).background(tint.copy(alpha = 0.16f), RoundedCornerShape(8.dp)),
+                                Modifier.size(32.dp).background(tint.copy(alpha = 0.16f), RoundedCornerShape(10.dp)),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(Icons.Filled.Folder, null, tint = tint, modifier = Modifier.size(16.dp))

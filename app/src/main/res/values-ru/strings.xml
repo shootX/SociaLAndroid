@@ -14,7 +14,6 @@
     <string name="action_copy_link">Скопировать ссылку</string>
     <string name="action_create">Создать</string>
     <string name="action_delete">Удалить</string>
-    <string name="action_deselect_all">Снять выбор</string>
     <string name="action_details">Подробнее</string>
     <string name="action_done">Готово</string>
     <string name="action_edit">Изменить</string>
@@ -24,7 +23,6 @@
     <string name="action_remove_favorite">Убрать из избранного</string>
     <string name="action_save">Сохранить</string>
     <string name="action_select">Выбрать</string>
-    <string name="action_select_all">Выбрать все</string>
     <string name="action_share">Поделиться</string>
     <string name="ad_label">Реклама</string>
     <string name="ad_open">Открыть</string>
@@ -202,4 +200,10 @@
     <string name="language_georgian" translatable="false">ქართული</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_russian" translatable="false">Русский</string>
+    <string name="selection_favorite">В избранное</string>
+    <string name="selection_unfavorite">Из избранного</string>
+    <string name="selection_move">Переместить</string>
+    <string name="detail_copy">Копировать</string>
+    <string name="selection_all">Все</string>
+    <string name="selection_clear">Снять</string>
 </resources>

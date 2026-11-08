@@ -28,12 +28,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Check
@@ -52,7 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
@@ -76,7 +73,6 @@ import com.ich.socialsave.data.SavedPost
 import com.ich.socialsave.ui.theme.Brand
 import com.ich.socialsave.util.RelativeTime
 import com.ich.socialsave.util.displayTitle
-import com.ich.socialsave.util.label
 import java.io.File
 
 /** Actions a grid can ask its screen to perform. */
@@ -132,9 +128,9 @@ fun PostGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = bottomPadding),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(
             entries,
@@ -179,7 +175,7 @@ private fun PostCardWithMenu(
             category = category,
             libraryChrome = libraryChrome,
             selected = selected,
-            modifier = Modifier.combinedClickable(
+            modifier = Modifier.clip(RoundedCornerShape(Brand.cardRadius)).combinedClickable(
                 onClick = { actions.onTap(post) },
                 onLongClick = {
                     if (selected == null) {
@@ -214,83 +210,63 @@ fun PostCard(
     val shape = RoundedCornerShape(Brand.cardRadius)
     val file = remember(post.thumbnailFile) { context.container.thumbnails.file(post.thumbnailFile) }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(c.surface, shape)
+            .border(if (selected == true) 2.dp else 1.dp, if (selected == true) c.accent else c.line, shape)
+            .padding(8.dp),
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
-                .shadow(3.dp, shape, ambientColor = Color.Black.copy(alpha = 0.06f), spotColor = Color.Black.copy(alpha = 0.06f))
-                .clip(shape)
-                .background(c.surface)
-                .border(
-                    width = if (selected == true) 2.dp else 1.dp,
-                    color = if (selected == true) c.ink else c.line.copy(alpha = if (file == null) 1f else 0.5f),
-                    shape = shape,
-                ),
+                .aspectRatio(1.15f)
+                .clip(RoundedCornerShape(14.dp))
+                .background(c.muted),
         ) {
             PostThumbnail(post, file)
-            if (file != null && !libraryChrome) {
-                PlatformBadge(post.socialPlatform, Modifier.align(Alignment.TopStart).padding(8.dp))
-            }
-            if (selected == false) {
-                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.18f)))
-            }
+            PlatformBadge(post.socialPlatform, Modifier.align(Alignment.TopStart).padding(8.dp))
+            val cornerBadge = Modifier.align(Alignment.TopEnd).padding(8.dp)
             when {
-                selected != null -> Icon(
-                    if (selected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                    null,
-                    tint = if (selected) c.ink else Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(if (selected) c.canvas else Color.Black.copy(alpha = 0.25f)),
-                )
-                post.isFavorite -> Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(26.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.55f)),
+                selected == true -> Box(
+                    cornerBadge.size(28.dp).background(c.mint, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Filled.Star, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Outlined.Check, null, tint = c.onMint, modifier = Modifier.size(16.dp))
+                }
+                selected == false -> Box(
+                    cornerBadge.size(26.dp).background(c.surface, CircleShape).border(2.dp, c.gray, CircleShape),
+                )
+                post.isFavorite -> Box(
+                    cornerBadge.size(28.dp).background(c.mint, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Star, null, tint = c.onMint, modifier = Modifier.size(14.dp))
                 }
             }
         }
 
-        Spacer(Modifier.height(10.dp))
-        if (libraryChrome) {
-            val meta = if (category != null) "${post.socialPlatform.label()} · ${category.name}" else post.socialPlatform.label()
-            Text(meta, color = c.gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Column(Modifier.padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 4.dp)) {
+            Text(
+                post.displayTitle(),
+                color = c.ink,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 22.sp,
+            )
             Spacer(Modifier.height(4.dp))
+            val time = if (libraryChrome) RelativeTime.detailed(context, post.createdAt) else RelativeTime.compact(context, post.createdAt)
+            Text(
+                listOfNotNull(time, category?.name).joinToString(" · "),
+                color = c.gray,
+                fontSize = 13.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-        Text(
-            post.displayTitle(),
-            color = c.ink,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            lineHeight = 19.sp,
-        )
-        if (!libraryChrome && category != null) {
-            Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CategoryDot(category.colorHex, 7.dp)
-                Spacer(Modifier.width(5.dp))
-                Text(category.name, color = c.gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            if (libraryChrome) RelativeTime.detailed(context, post.createdAt) else RelativeTime.compact(context, post.createdAt),
-            color = c.gray,
-            fontSize = 13.sp,
-            maxLines = 1,
-        )
     }
 }
 

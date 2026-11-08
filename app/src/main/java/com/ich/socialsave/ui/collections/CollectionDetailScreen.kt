@@ -1,22 +1,17 @@
 package com.ich.socialsave.ui.collections
 
+import com.ich.socialsave.ui.components.HeaderIconButton
+import com.ich.socialsave.ui.components.CenteredTopBar
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ich.socialsave.R
@@ -43,7 +37,6 @@ import com.ich.socialsave.ui.theme.Brand
 import com.ich.socialsave.util.shareText
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollectionDetailScreen(kind: CollectionKind, onBack: () -> Unit, onOpenPost: (String) -> Unit) {
     val context = LocalContext.current
@@ -86,31 +79,19 @@ fun CollectionDetailScreen(kind: CollectionKind, onBack: () -> Unit, onOpenPost:
     }
 
     Column(Modifier.fillMaxSize().background(c.canvas)) {
-        CenterAlignedTopAppBar(
-            title = { Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.a11y_back))
-                }
-            },
+        CenteredTopBar(
+            title = title,
+            onBack = onBack,
             actions = {
                 if (visible.isNotEmpty()) {
-                    IconButton(onClick = { shareTextIntent(context, shareText(context, visible, title)) }) {
-                        Icon(Icons.Filled.Share, stringResource(R.string.action_share))
+                    HeaderIconButton(Icons.Outlined.Share, stringResource(R.string.action_share)) {
+                        shareTextIntent(context, shareText(context, visible, title))
                     }
                 }
                 if (category != null) {
-                    IconButton(onClick = { editing = true }) {
-                        Icon(Icons.Filled.Edit, stringResource(R.string.action_edit))
-                    }
+                    HeaderIconButton(Icons.Outlined.Edit, stringResource(R.string.action_edit)) { editing = true }
                 }
             },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = c.canvas,
-                titleContentColor = c.ink,
-                navigationIconContentColor = c.ink,
-                actionIconContentColor = c.ink,
-            ),
         )
         if (visible.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.Center) {

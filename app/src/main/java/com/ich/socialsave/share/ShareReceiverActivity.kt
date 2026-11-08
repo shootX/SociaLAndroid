@@ -112,10 +112,13 @@ private fun ShareSheet(result: SaveResult?, onClose: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(Modifier.size(52.dp).background(c.surface, CircleShape), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(56.dp).background(if (result is SaveResult.Saved) c.mint else c.muted, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
                 when (result) {
-                    null -> CircularProgressIndicator(color = c.ink, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
-                    is SaveResult.Saved -> Icon(Icons.Filled.Check, null, tint = c.ink)
+                    null -> CircularProgressIndicator(color = c.accent, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
+                    is SaveResult.Saved -> Icon(Icons.Filled.Check, null, tint = c.onMint)
                     SaveResult.AlreadyExists -> Icon(Icons.Filled.Bookmark, null, tint = c.ink)
                     else -> Icon(Icons.Filled.ErrorOutline, null, tint = c.danger)
                 }

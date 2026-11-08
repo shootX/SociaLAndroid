@@ -1,15 +1,13 @@
 package com.ich.socialsave.ui.detail
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,27 +16,23 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -52,8 +46,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -66,12 +58,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ich.socialsave.R
 import com.ich.socialsave.container
 import com.ich.socialsave.data.SavedPost
-import com.ich.socialsave.ui.components.CategoryDot
 import com.ich.socialsave.ui.components.CategoryMenuItems
+import com.ich.socialsave.ui.components.CenteredTopBar
+import com.ich.socialsave.ui.components.PillRow
 import com.ich.socialsave.ui.components.PlatformBadge
 import com.ich.socialsave.ui.components.PostThumbnail
 import com.ich.socialsave.ui.components.PrimaryButton
 import com.ich.socialsave.ui.components.SecondaryButton
+import com.ich.socialsave.ui.components.SectionLabel
 import com.ich.socialsave.ui.components.archiveField
 import com.ich.socialsave.ui.components.copyLink
 import com.ich.socialsave.ui.components.openLink
@@ -80,7 +74,6 @@ import com.ich.socialsave.ui.library.DeleteConfirmDialog
 import com.ich.socialsave.ui.theme.Brand
 import com.ich.socialsave.util.RelativeTime
 import com.ich.socialsave.util.displayTitle
-import com.ich.socialsave.util.label
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.debounce
@@ -88,27 +81,38 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(postId: String, onBack: () -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
     val postState = remember(postId) { repository.observePost(postId) }.collectAsStateWithLifecycle(initialValue = null)
+    val scope = rememberCoroutineScope()
     val c = Brand.colors
 
     Column(Modifier.fillMaxSize().background(c.canvas)) {
-        CenterAlignedTopAppBar(
-            title = { Text(stringResource(R.string.detail_title), fontWeight = FontWeight.SemiBold) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.a11y_back))
+        CenteredTopBar(
+            title = stringResource(R.string.detail_title),
+            onBack = onBack,
+            actions = {
+                postState.value?.let { post ->
+                    Surface(
+                        onClick = { scope.launch { repository.setFavorite(listOf(post.id), !post.isFavorite) } },
+                        shape = CircleShape,
+                        color = if (post.isFavorite) c.mint else c.surface,
+                        border = if (post.isFavorite) null else BorderStroke(1.dp, c.line),
+                        modifier = Modifier.size(44.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                if (post.isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                stringResource(if (post.isFavorite) R.string.action_remove_favorite else R.string.action_add_favorite),
+                                tint = if (post.isFavorite) c.onMint else c.ink,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
                 }
             },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = c.canvas,
-                titleContentColor = c.ink,
-                navigationIconContentColor = c.ink,
-            ),
         )
         postState.value?.let { PostDetailContent(it, onBack) }
     }
@@ -142,85 +146,73 @@ private fun PostDetailContent(post: SavedPost, onBack: () -> Unit) {
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        val shape = RoundedCornerShape(Brand.cardRadius + 4.dp)
         Box(
-            Modifier.fillMaxWidth().aspectRatio(1f)
-                .shadow(6.dp, shape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.08f))
-                .clip(shape).background(c.surface)
-                .border(1.dp, c.line.copy(alpha = if (file == null) 1f else 0.5f), shape),
+            Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(24.dp)).background(c.muted),
         ) {
             PostThumbnail(post, file, iconSize = 40.dp)
-            if (file != null) PlatformBadge(post.socialPlatform, Modifier.align(Alignment.TopStart).padding(12.dp))
+            PlatformBadge(post.socialPlatform, Modifier.align(Alignment.TopStart).padding(12.dp))
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                post.socialPlatform.label().uppercase(), color = c.gray, fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp,
+                post.displayTitle(),
+                color = c.ink,
+                fontSize = 24.sp,
+                lineHeight = 32.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.3).sp,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(post.displayTitle(), color = c.ink, fontSize = 24.sp, fontWeight = FontWeight.SemiBold, maxLines = 4, overflow = TextOverflow.Ellipsis)
-            Text("${post.displayHost} · ${RelativeTime.compact(context, post.createdAt)}", color = c.gray, fontSize = 14.sp)
+            Text("${post.displayHost} · ${RelativeTime.compact(context, post.createdAt)}", color = c.gray, fontSize = 13.sp)
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.filter_category), color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            Box {
-                val selected = categories.firstOrNull { it.id == post.categoryId }
-                Row(
-                    Modifier.fillMaxWidth().archiveField().clickable { categoryMenu = true }
-                        .padding(horizontal = 14.dp, vertical = 13.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (selected != null) {
-                        CategoryDot(selected.colorHex)
-                        Spacer(Modifier.width(8.dp))
-                        Text(selected.name, color = c.ink, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                    } else {
-                        Text(stringResource(R.string.categories_choose), color = c.gray, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                    }
-                    Icon(Icons.Filled.UnfoldMore, null, tint = c.gray, modifier = Modifier.size(18.dp))
-                }
-                DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
-                    CategoryMenuItems(categories, post.categoryId) { id ->
-                        categoryMenu = false
-                        scope.launch { repository.move(listOf(post.id), id) }
-                    }
+        Box {
+            val selected = categories.firstOrNull { it.id == post.categoryId }
+            PillRow(
+                icon = Icons.Outlined.Folder,
+                title = selected?.name ?: stringResource(R.string.categories_choose),
+                subtitle = stringResource(R.string.filter_category),
+                onClick = { categoryMenu = true },
+            )
+            DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
+                CategoryMenuItems(categories, post.categoryId) { id ->
+                    categoryMenu = false
+                    scope.launch { repository.move(listOf(post.id), id) }
                 }
             }
         }
 
         PrimaryButton(stringResource(R.string.action_open), onClick = { openLink(context, post.url) })
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SecondaryButton(
-                stringResource(if (post.isFavorite) R.string.action_remove_favorite else R.string.action_add_favorite),
-                onClick = { scope.launch { repository.setFavorite(listOf(post.id), !post.isFavorite) } },
-                icon = if (post.isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                modifier = Modifier.weight(1f),
-            )
-            SecondaryButton(
-                stringResource(R.string.action_copy_link),
+                stringResource(R.string.detail_copy),
                 onClick = {
                     copyLink(context, post.url)
                     Toast.makeText(context, R.string.action_copy_link, Toast.LENGTH_SHORT).show()
                 },
-                icon = Icons.Filled.ContentCopy,
+                icon = Icons.Outlined.ContentCopy,
                 modifier = Modifier.weight(1f),
             )
             SecondaryButton(
-                null,
+                stringResource(R.string.action_share),
                 onClick = { shareTextIntent(context, post.url) },
-                icon = Icons.Filled.Share,
-                modifier = Modifier.width(56.dp),
+                icon = Icons.Outlined.Share,
+                modifier = Modifier.weight(1f),
             )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.detail_note), color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            Box(Modifier.fillMaxWidth().heightIn(min = 84.dp).archiveField().padding(12.dp)) {
+            SectionLabel(stringResource(R.string.detail_note))
+            Box(
+                Modifier.fillMaxWidth().heightIn(min = 84.dp)
+                    .archiveField(RoundedCornerShape(Brand.cardRadius))
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            ) {
                 if (notes.isEmpty()) Text(stringResource(R.string.detail_note_placeholder), color = c.gray, fontSize = 16.sp)
                 BasicTextField(
                     value = notes,
@@ -234,19 +226,19 @@ private fun PostDetailContent(post: SavedPost, onBack: () -> Unit) {
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(stringResource(R.string.detail_link), color = c.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SectionLabel(stringResource(R.string.detail_link))
             SelectionContainer {
-                Text(post.url, color = c.gray, fontSize = 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                Text(post.url, color = c.gray, fontSize = 13.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
         }
 
         SecondaryButton(
             stringResource(R.string.action_delete),
             onClick = { confirmDelete = true },
-            icon = Icons.Filled.Delete,
+            icon = Icons.Outlined.Delete,
             destructive = true,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(8.dp))
     }

@@ -14,7 +14,6 @@
     <string name="action_copy_link">ლინკის კოპირება</string>
     <string name="action_create">შექმნა</string>
     <string name="action_delete">წაშლა</string>
-    <string name="action_deselect_all">მონიშვნის მოხსნა</string>
     <string name="action_details">დეტალები</string>
     <string name="action_done">მზადაა</string>
     <string name="action_edit">რედაქტირება</string>
@@ -24,7 +23,6 @@
     <string name="action_remove_favorite">რჩეულებიდან ამოშლა</string>
     <string name="action_save">შენახვა</string>
     <string name="action_select">მონიშვნა</string>
-    <string name="action_select_all">ყველას მონიშვნა</string>
     <string name="action_share">გაზიარება</string>
     <string name="ad_label">რეკლამა</string>
     <string name="ad_open">გახსნა</string>
@@ -202,4 +200,10 @@
     <string name="language_georgian" translatable="false">ქართული</string>
     <string name="language_english" translatable="false">English</string>
     <string name="language_russian" translatable="false">Русский</string>
+    <string name="selection_favorite">რჩეულებში</string>
+    <string name="selection_unfavorite">რჩეულებიდან</string>
+    <string name="selection_move">გადატანა</string>
+    <string name="detail_copy">კოპირება</string>
+    <string name="selection_all">ყველა</string>
+    <string name="selection_clear">მოხსნა</string>
 </resources>

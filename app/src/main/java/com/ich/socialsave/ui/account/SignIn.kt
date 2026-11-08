@@ -1,15 +1,19 @@
 package com.ich.socialsave.ui.account
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import com.ich.socialsave.ui.components.BrandMark
+import com.ich.socialsave.ui.components.AccentHeadline
+import androidx.compose.foundation.shape.CircleShape
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,7 +42,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -82,11 +84,7 @@ fun SignInSheet(onDismiss: () -> Unit) {
             Modifier.navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painterResource(R.drawable.brand_mark),
-                null,
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)),
-            )
+            BrandMark(64.dp)
             Spacer(Modifier.height(16.dp))
             SignInHeadline(TextAlign.Center)
             Spacer(Modifier.height(24.dp))
@@ -108,31 +106,21 @@ fun NotNowLabel(enabled: Boolean) {
     val c = Brand.colors
     Text(
         stringResource(R.string.sign_in_not_now),
-        color = if (enabled) c.gray else c.gray.copy(alpha = 0.4f),
-        fontSize = 15.sp,
+        color = if (enabled) c.ink else c.gray.copy(alpha = 0.4f),
+        fontSize = 14.sp,
         fontWeight = FontWeight.Medium,
     )
 }
 
 @Composable
 fun SignInHeadline(align: TextAlign, titleSize: Int = 24) {
-    val c = Brand.colors
-    Text(
-        stringResource(R.string.sign_in_title),
-        color = c.ink,
-        fontSize = titleSize.sp,
-        lineHeight = (titleSize + 6).sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = (-0.4).sp,
-        textAlign = align,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Spacer(Modifier.height(8.dp))
+    AccentHeadline(stringResource(R.string.sign_in_title), titleSize.sp, (titleSize + 8).sp, textAlign = align)
+    Spacer(Modifier.height(12.dp))
     Text(
         stringResource(R.string.sign_in_subtitle),
-        color = c.gray,
-        fontSize = if (titleSize > 24) 17.sp else 15.sp,
-        lineHeight = if (titleSize > 24) 23.sp else 21.sp,
+        color = Brand.colors.gray,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
         textAlign = align,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -174,7 +162,7 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProviderButton(
                 text = stringResource(R.string.sign_in_apple),
                 logo = R.drawable.ic_logo_apple,
@@ -183,7 +171,7 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
                 container = if (c.isDark) Color.White else Color.Black,
                 content = if (c.isDark) Color.Black else Color.White,
                 border = null,
-                tintLogo = true,
+                logoTint = if (c.isDark) Color.Black else Color.White,
             ) {
                 if (!AppleSignIn.start(context, account.appleStartUrl())) account.reportSignInFailure()
             }
@@ -205,19 +193,19 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
                     text = stringResource(R.string.sign_in_facebook),
                     logo = R.drawable.ic_logo_facebook,
                     enabled = !busy,
-                    container = FacebookBlue,
-                    content = Color.White,
-                    border = null,
-                    tintLogo = true,
+                    container = c.surface,
+                    content = c.ink,
+                    border = BorderStroke(1.dp, c.line),
+                    logoTint = FacebookBlue,
                 ) {
                     account.clearSignInError()
                     facebook()
                 }
             }
         }
-        Box(Modifier.fillMaxWidth().heightIn(min = 36.dp).padding(top = 10.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxWidth().heightIn(min = 28.dp).padding(top = 8.dp), contentAlignment = Alignment.Center) {
             when (status) {
-                SignInStatus.WORKING -> CircularProgressIndicator(color = c.ink, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                SignInStatus.WORKING -> CircularProgressIndicator(color = c.accent, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                 SignInStatus.FAILED -> Text(
                     stringResource(R.string.sign_in_failed),
                     color = c.danger,
@@ -231,6 +219,7 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LegalText() {
     val context = LocalContext.current
@@ -239,18 +228,19 @@ private fun LegalText() {
     Text(
         stringResource(R.string.sign_in_legal),
         color = c.gray,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
     )
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = { openLink(context, legalUrl("terms", language)) }) {
-            Text(stringResource(R.string.settings_terms), color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    // Two links side by side where they fit, stacked on narrow phones in the longer languages.
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        val linkPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+        TextButton(onClick = { openLink(context, legalUrl("terms", language)) }, contentPadding = linkPadding) {
+            Text(stringResource(R.string.settings_terms), color = c.accentText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
-        Text("·", color = c.gray, fontSize = 12.sp)
-        TextButton(onClick = { openLink(context, legalUrl("privacy", language)) }) {
-            Text(stringResource(R.string.settings_privacy), color = c.ink, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        TextButton(onClick = { openLink(context, legalUrl("privacy", language)) }, contentPadding = linkPadding) {
+            Text(stringResource(R.string.settings_privacy), color = c.accentText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }
@@ -263,13 +253,13 @@ private fun ProviderButton(
     container: Color,
     content: Color,
     border: BorderStroke?,
-    tintLogo: Boolean = false,
+    logoTint: Color = Color.Unspecified,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        shape = RoundedCornerShape(Brand.controlRadius),
+        shape = CircleShape,
         border = border,
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
@@ -277,15 +267,15 @@ private fun ProviderButton(
             disabledContainerColor = container.copy(alpha = 0.5f),
             disabledContentColor = content.copy(alpha = 0.5f),
         ),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
     ) {
         Icon(
             painterResource(logo),
             null,
-            tint = if (tintLogo) content else Color.Unspecified,
-            modifier = Modifier.size(19.dp),
+            tint = logoTint,
+            modifier = Modifier.size(20.dp),
         )
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(12.dp))
         Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }

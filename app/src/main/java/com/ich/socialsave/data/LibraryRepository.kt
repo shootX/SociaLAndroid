@@ -128,9 +128,13 @@ class LibraryRepository(
     suspend fun updateCategory(category: Category, name: String, colorHex: String) {
         val trimmed = name.trim().clip(MAX_NAME)
         validate(trimmed, category.id, categories.all())
-        // The fresh row, not the copy the editor opened with: a sync may have changed its order meanwhile.
+        // The fresh row, not the copy the editor opened with ([category]): a sync may have changed it meanwhile,
+        // so only a field the person actually changed is written.
         val current = categories.get(category.id) ?: return
-        categories.update(current.copy(name = trimmed, colorHex = colorHex).touched(clock()))
+        val newName = if (trimmed == category.name) current.name else trimmed
+        val newColor = if (colorHex == category.colorHex) current.colorHex else colorHex
+        if (newName == current.name && newColor == current.colorHex) return
+        categories.update(current.copy(name = newName, colorHex = newColor).touched(clock()))
         onChanged()
     }
 

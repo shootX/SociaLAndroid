@@ -35,13 +35,14 @@ object ShareShortcuts {
                 .setShortLabel(category.name)
                 .setIcon(icon(context, category.colorHex))
                 .setCategories(setOf(SHARE_CATEGORY))
-                // Required by Android; Android 13+ keeps these out of the launcher's long-press menu, older ones open the app.
+                // Required by Android. They also show in the icon's long-press menu, where they just open the app:
+                // setExcludedFromSurfaces would hide them there, but androidx then doesn't publish them at all.
                 .setIntent(Intent(context, MainActivity::class.java).setAction(Intent.ACTION_VIEW))
-                .setExcludedFromSurfaces(ShortcutInfoCompat.SURFACE_LAUNCHER)
                 .build()
         }
         // Rate-limited in the background; the next change in the foreground catches up.
         runCatching { ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts) }
+            .onSuccess { updated -> if (!updated) Log.w("ShareShortcuts", "Share shortcuts not updated (rate-limited)") }
             .onFailure { Log.w("ShareShortcuts", "Couldn't update share shortcuts", it) }
     }
 

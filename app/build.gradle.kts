@@ -25,7 +25,7 @@ android {
         applicationId = "com.ich.socialsave"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = "1.2.0"
 
         val admobAppId = config("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"

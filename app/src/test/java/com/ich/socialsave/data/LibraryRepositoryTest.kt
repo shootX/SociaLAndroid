@@ -64,6 +64,15 @@ class LibraryRepositoryTest {
         assertEquals(5, db.categories().get(opened.id)!!.sortOrder)
     }
 
+    @Test fun recoloringKeepsANameSyncedWhileTheEditorWasOpen() = runBlocking {
+        val opened = repository.createCategory("Recipes", "#000000")
+        db.categories().upsert(opened.copy(name = "Cooking", dirty = false))
+        repository.updateCategory(opened, "Recipes", "#FF0000")
+        val saved = db.categories().get(opened.id)!!
+        assertEquals("Cooking", saved.name)
+        assertEquals("#FF0000", saved.colorHex)
+    }
+
     @Test fun deleteLeavesATombstoneOnlyWithAnAccount() = runBlocking {
         val synced = save("https://example.com/a")
         repository.delete(listOf(synced))

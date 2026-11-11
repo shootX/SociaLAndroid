@@ -129,18 +129,25 @@ private fun PostDetailContent(post: SavedPost, onBack: () -> Unit) {
     val c = Brand.colors
 
     var notes by remember(post.id) { mutableStateOf(post.notes.orEmpty()) }
+    // Only text the person typed is saved: a note synced from another phone while this screen is open
+    // must not be overwritten by the copy taken when it opened.
+    var edited by remember(post.id) { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     var categoryMenu by remember { mutableStateOf(false) }
     val file = remember(post.thumbnailFile) { container.thumbnails.file(post.thumbnailFile) }
     val latestNotes by rememberUpdatedState(notes)
+    val latestEdited by rememberUpdatedState(edited)
 
+    LaunchedEffect(post.notes) { if (!edited) notes = post.notes.orEmpty() }
     // Save notes 400 ms after typing stops, and once more when leaving the screen.
     LaunchedEffect(post.id) {
-        snapshotFlow { notes }.drop(1).debounce(400).collect { repository.setNotes(post.id, it) }
+        snapshotFlow { notes }.drop(1).debounce(400).collect { if (edited) repository.setNotes(post.id, it) }
     }
     DisposableEffect(post.id) {
         onDispose {
-            container.scope.launch { withContext(NonCancellable) { repository.setNotes(post.id, latestNotes) } }
+            if (latestEdited) {
+                container.scope.launch { withContext(NonCancellable) { repository.setNotes(post.id, latestNotes) } }
+            }
         }
     }
 
@@ -216,7 +223,10 @@ private fun PostDetailContent(post: SavedPost, onBack: () -> Unit) {
                 if (notes.isEmpty()) Text(stringResource(R.string.detail_note_placeholder), color = c.gray, fontSize = 16.sp)
                 BasicTextField(
                     value = notes,
-                    onValueChange = { notes = it },
+                    onValueChange = {
+                        notes = it
+                        edited = true
+                    },
                     textStyle = TextStyle(color = c.ink, fontSize = 16.sp),
                     cursorBrush = SolidColor(c.ink),
                     minLines = 3,

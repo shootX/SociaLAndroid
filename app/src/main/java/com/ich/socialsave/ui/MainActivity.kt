@@ -72,7 +72,6 @@ import com.ich.socialsave.ui.collections.CollectionsScreen
 import com.ich.socialsave.ui.detail.PostDetailScreen
 import com.ich.socialsave.ui.library.LibraryScreen
 import com.ich.socialsave.ui.onboarding.OnboardingScreen
-import com.ich.socialsave.ui.settings.OneTapGuideScreen
 import com.ich.socialsave.ui.settings.SettingsScreen
 import com.ich.socialsave.ui.theme.SocialSaveTheme
 import com.ich.socialsave.ui.theme.isDarkTheme
@@ -130,7 +129,6 @@ private object Routes {
     const val SETTINGS = "settings"
     const val POST = "post/{id}"
     const val COLLECTION = "collection/{kind}"
-    const val GUIDE = "guide"
 
     fun post(id: String) = "post/$id"
     fun collection(kind: CollectionKind) = "collection/${android.net.Uri.encode(kind.route)}"
@@ -196,7 +194,6 @@ private fun AppRoot(pendingPostId: String?, onPendingHandled: () -> Unit) {
                 }
                 composable(Routes.SETTINGS) {
                     SettingsScreen(
-                        onOpenGuide = { nav.navigate(Routes.GUIDE) },
                         onShowOnboarding = { container.settings.setOnboardingCompleted(false) },
                     )
                 }
@@ -210,9 +207,6 @@ private fun AppRoot(pendingPostId: String?, onPendingHandled: () -> Unit) {
                         onBack = { nav.popBackStack() },
                         onOpenPost = { nav.navigate(Routes.post(it)) },
                     )
-                }
-                composable(Routes.GUIDE) {
-                    OneTapGuideScreen(onBack = { nav.popBackStack() })
                 }
             }
         }

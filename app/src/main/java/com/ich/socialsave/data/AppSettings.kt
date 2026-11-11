@@ -76,7 +76,13 @@ class AppSettings(context: Context) {
         _reminderMinutes.value = minutes
     }
 
+    /** Copy time of the clipboard item the library already offered (see CopiedLink), so it isn't offered again. */
+    var handledClip: Long
+        get() = prefs.getLong(KEY_HANDLED_CLIP, 0L)
+        set(value) = prefs.edit { putLong(KEY_HANDLED_CLIP, value) }
+
     private companion object {
+        const val KEY_HANDLED_CLIP = "clipboard.handled"
         const val KEY_APPEARANCE = "appearance"
         const val KEY_NEWEST_FIRST = "library.newestFirst"
         const val KEY_ONBOARDING = "onboarding.completed"

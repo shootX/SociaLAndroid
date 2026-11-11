@@ -25,8 +25,8 @@ android {
         applicationId = "com.ich.socialsave"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.2.0"
 
         val admobAppId = config("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
         val admobNativeId = config("ADMOB_NATIVE_ID") ?: "ca-app-pub-3940256099942544/2247696110"
@@ -91,6 +91,13 @@ android {
         generateLocaleConfig = true
     }
 
+    // The in-app language picker needs every language in the install; Play would otherwise ship only the phone's.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
@@ -145,6 +152,8 @@ dependencies {
     implementation(libs.androidx.browser)
 
     testImplementation(libs.junit)
+    // Room DAO and repository tests run on the JVM against an in-memory database.
+    testImplementation(libs.robolectric)
     testImplementation(libs.okhttp.mockwebserver)
     // The Android jar only has stubs for org.json; JVM tests need the real implementation.
     testImplementation(libs.org.json)

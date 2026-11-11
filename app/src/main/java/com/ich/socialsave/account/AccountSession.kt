@@ -48,6 +48,16 @@ class AccountSession(
         if (_signIn.value == SignInStatus.FAILED) _signIn.value = SignInStatus.IDLE
     }
 
+    /** Google's sheet can take seconds to open: show progress from the tap, not only once a token arrives. */
+    fun beginSignIn() {
+        _signIn.value = SignInStatus.WORKING
+    }
+
+    /** The person closed the provider's sheet (or it left the screen) before we had a token. */
+    fun cancelSignIn() {
+        _signIn.value = SignInStatus.IDLE
+    }
+
     /** A provider (Google, Facebook) failed before we had a token to send. */
     fun reportSignInFailure() {
         _signIn.value = SignInStatus.FAILED
@@ -96,7 +106,7 @@ class AccountSession(
                     if (previousUser != session.user.id) {
                         // First sign-in (or another account): upload and merge everything on this phone.
                         store.cursor = null
-                        local.markAllDirty()
+                        if (previousUser != null) local.reassignIds() else local.markAllDirty()
                     }
                 }
                 _signIn.value = SignInStatus.IDLE

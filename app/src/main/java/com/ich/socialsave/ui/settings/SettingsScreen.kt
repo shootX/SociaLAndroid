@@ -63,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -99,12 +100,12 @@ import java.time.temporal.WeekFields
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
+fun SettingsScreen(onShowOnboarding: () -> Unit) {
     val context = LocalContext.current
     val container = context.container
     val settings = container.settings
     val c = Brand.colors
-    val locale = context.resources.configuration.locales[0]
+    val locale = LocalConfiguration.current.locales[0]
 
     val remindersEnabled by settings.remindersEnabled.collectAsStateWithLifecycle()
     val reminderDay by settings.reminderDay.collectAsStateWithLifecycle()
@@ -282,8 +283,6 @@ fun SettingsScreen(onOpenGuide: () -> Unit, onShowOnboarding: () -> Unit) {
                     stringResource(R.string.settings_language),
                     languageLabel(language),
                 ) { languageDialog = true }
-                Divider()
-                NavRow(null, stringResource(R.string.settings_one_tap_save), onOpenGuide)
                 Divider()
                 NavRow(null, stringResource(R.string.settings_how_to_save), onShowOnboarding)
                 Divider()

@@ -87,6 +87,13 @@ import com.ich.socialsave.util.icon
 import com.ich.socialsave.util.label
 import com.ich.socialsave.util.shareText
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.platform.LocalWindowInfo
+import com.ich.socialsave.share.CopiedLink
 
 /** Library filter tabs: everything, favorites, or one network. */
 sealed interface LibraryScope {
@@ -129,6 +136,10 @@ fun LibraryScreen(
     var pendingDelete by remember { mutableStateOf<List<SavedPost>>(emptyList()) }
     var pasteOpen by rememberSaveable { mutableStateOf(false) }
     var filterOpen by rememberSaveable { mutableStateOf(false) }
+    var copiedClip by remember { mutableStateOf<Long?>(null) }
+    // The clipboard can only be checked while the window has focus: on opening and on coming back from another app.
+    val focused = LocalWindowInfo.current.isWindowFocused
+    LaunchedEffect(focused) { if (focused) copiedClip = CopiedLink.pending(context) }
 
     val allPosts = posts ?: emptyList()
     val lookup = remember(categories) { categories.associateBy { it.id } }
@@ -216,6 +227,18 @@ fun LibraryScreen(
                             value = searchText,
                             onValueChange = { searchText = it },
                             modifier = Modifier.padding(top = 16.dp),
+                        )
+                    }
+                    copiedClip?.let { stamp ->
+                        CopiedLinkBanner(
+                            onSave = {
+                                CopiedLink.save(context, stamp)
+                                copiedClip = null
+                            },
+                            onDismiss = {
+                                CopiedLink.handled(context, stamp)
+                                copiedClip = null
+                            },
                         )
                     }
                 }
@@ -335,6 +358,42 @@ private fun ScopeBar(posts: List<SavedPost>, current: LibraryScope, onSelect: (L
                 is LibraryScope.Platform -> item.platform.label()
             }
             TextTab(title, selected = item == current) { onSelect(item) }
+        }
+    }
+}
+
+/** "Save the copied link?" with Save and a dismiss cross, under the search field. */
+@Composable
+private fun CopiedLinkBanner(onSave: () -> Unit, onDismiss: () -> Unit) {
+    val c = Brand.colors
+    Row(
+        Modifier.padding(top = 16.dp).fillMaxWidth()
+            .background(c.accentSoft, RoundedCornerShape(16.dp))
+            .border(1.5.dp, c.accent, RoundedCornerShape(16.dp))
+            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(36.dp).background(c.mint, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.Link, null, tint = c.onMint, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(
+            stringResource(R.string.clipboard_offer),
+            color = c.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, lineHeight = 20.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
+        Button(
+            onClick = onSave,
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(containerColor = c.action, contentColor = c.onAction),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            modifier = Modifier.height(40.dp),
+        ) {
+            Text(stringResource(R.string.action_save), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        }
+        IconButton(onClick = onDismiss, modifier = Modifier.size(width = 36.dp, height = 44.dp)) {
+            Icon(Icons.Filled.Close, stringResource(R.string.a11y_dismiss), tint = c.gray, modifier = Modifier.size(16.dp))
         }
     }
 }

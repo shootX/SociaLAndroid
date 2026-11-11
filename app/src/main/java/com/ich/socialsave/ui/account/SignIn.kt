@@ -43,6 +43,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -148,16 +149,20 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
 
     fun google() {
         val activity = context.findActivity() ?: return account.reportSignInFailure()
-        account.clearSignInError()
+        // Live value, not `busy`: a second tap can land before recomposition disables the button.
+        if (account.signInStatus.value == SignInStatus.WORKING) return
+        account.beginSignIn()
         scope.launch {
-            try {
-                GoogleSignIn.idToken(activity)?.let(account::signInWithGoogle)
+            val token = try {
+                GoogleSignIn.idToken(activity)
             } catch (cancelled: CancellationException) {
+                account.cancelSignIn() // the sheet or onboarding page left the screen: don't keep the spinner
                 throw cancelled
             } catch (error: Exception) {
                 android.util.Log.w("SignIn", "Google sign-in failed", error)
-                account.reportSignInFailure()
+                return@launch account.reportSignInFailure()
             }
+            if (token == null) account.cancelSignIn() else account.signInWithGoogle(token)
         }
     }
 
@@ -224,7 +229,7 @@ fun SignInOptions(onSignedIn: () -> Unit, modifier: Modifier = Modifier) {
 private fun LegalText() {
     val context = LocalContext.current
     val c = Brand.colors
-    val language = context.resources.configuration.locales[0].language
+    val language = LocalConfiguration.current.locales[0].language
     Text(
         stringResource(R.string.sign_in_legal),
         color = c.gray,

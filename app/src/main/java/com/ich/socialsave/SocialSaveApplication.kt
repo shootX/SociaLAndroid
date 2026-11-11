@@ -18,12 +18,14 @@ import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.data.AppSettings
 import com.ich.socialsave.data.LibraryRepository
 import com.ich.socialsave.data.ThumbnailStore
+import com.ich.socialsave.share.ShareShortcuts
 import com.ich.socialsave.widget.WidgetUpdater
 import com.ich.socialsave.work.MetadataWorker
 import com.ich.socialsave.work.ReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -97,6 +99,15 @@ class AppContainer(private val app: Application) {
         },
         tracksDeletes = { accountStore.hasAccount },
     )
+
+    init {
+        // The share sheet offers each category (Share → straight into it); keep those shortcuts in step.
+        scope.launch {
+            repository.observeCategories()
+                .distinctUntilChanged { old, new -> old.map { Triple(it.id, it.name, it.colorHex) } == new.map { Triple(it.id, it.name, it.colorHex) } }
+                .collect { ShareShortcuts.update(app, it) }
+        }
+    }
 
     fun rescheduleReminder() {
         scope.launch { ReminderScheduler.reschedule(app, settings) }

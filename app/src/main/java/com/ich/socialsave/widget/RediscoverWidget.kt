@@ -1,5 +1,6 @@
 package com.ich.socialsave.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -179,7 +180,12 @@ class RediscoverWidget : GlanceAppWidget() {
         }
     }
 
+    // shortcut: Glance 1.1 marks ColorProvider(@ColorRes) library-internal but it works and follows values-night;
+    // switch to the public day/night ColorProvider if a Glance upgrade removes it.
+    @SuppressLint("RestrictedApi")
     private fun ink() = ColorProvider(R.color.ink)
+
+    @SuppressLint("RestrictedApi")
     private fun gray() = ColorProvider(R.color.gray)
 
     companion object {

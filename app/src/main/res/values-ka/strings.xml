@@ -53,16 +53,6 @@
     <string name="filter_all_categories">ყველა კატეგორია</string>
     <string name="filter_category">კატეგორია</string>
     <string name="filter_title">ფილტრი</string>
-    <string name="guide_headline">შეინახე ერთი შეხებით</string>
-    <string name="guide_shortcut_body">დააჭირე და გეჭიროს SocialSave-ის ხატულაზე და აირჩიე „დაკოპირებული ლინკის შენახვა“. მთავარ ეკრანზე გადმოიტანე და ერთი შეხებით ღილაკი გექნება.</string>
-    <string name="guide_shortcut_title">აპის ხატულის მალსახმობი</string>
-    <string name="guide_subtitle">დააკოპირე ლინკი Instagram-ში, TikTok-ში ან ნებისმიერ სხვა აპში, მერე სწრაფ პარამეტრებში დააჭირე SocialSave-ის ფილას. ლინკი შეინახება აპის გახსნის გარეშე.</string>
-    <string name="guide_tile_add">ფილის დამატება</string>
-    <string name="guide_tile_step1">ეკრანის ზემოდან ორჯერ ჩამოუსვი თითი.</string>
-    <string name="guide_tile_step2">დააჭირე ფანქრის (რედაქტირების) ღილაკს.</string>
-    <string name="guide_tile_step3">გადმოიტანე „ლინკის შენახვა“ შენს ფილებში.</string>
-    <string name="guide_tile_title">სწრაფი პარამეტრების ფილა</string>
-    <string name="guide_title">ერთი შეხებით შენახვა</string>
     <string name="home_category_empty_subtitle">აირჩიე სხვა კატეგორია ან გაასუფთავე ფილტრი.</string>
     <string name="home_category_empty_title">ამ კატეგორიაში ჯერ არაფერია</string>
     <string name="home_empty_subtitle">შეინახე კონტენტი Instagram, TikTok, Facebook-იდან ან ჩასვი ლინკი.</string>
@@ -71,8 +61,6 @@
     <string name="intent_save_copied_failed">ლინკი ვერ შეინახა. სცადე თავიდან.</string>
     <string name="intent_save_copied_no_link">ბუფერში ლინკი არ არის. ჯერ დააკოპირე ლინკი.</string>
     <string name="intent_save_copied_saved">შენახულია SocialSave-ში</string>
-    <string name="intent_save_copied_short">ლინკის შენახვა</string>
-    <string name="intent_save_copied_title">დაკოპირებული ლინკის შენახვა</string>
     <string name="library_delete_many_confirm">წავშალო %d ლინკი?</string>
     <string name="library_favorites">რჩეულები</string>
     <string name="library_favorites_empty_subtitle">გახსენი პოსტი და დააჭირე „რჩეულებში დამატებას“.</string>
@@ -86,7 +74,7 @@
     <string name="onboarding_remind_body">კვირაში ერთხელ SocialSave შეგახსენებს რა შეინახე, რომ კარგი აღმოჩენები არ დაიკარგოს.</string>
     <string name="onboarding_remind_sample">ამ კვირაში 5 პოსტი შეინახე. გადახედე: „პასტა 15 წუთში“</string>
     <string name="onboarding_remind_title">ნამდვილად დაუბრუნდი</string>
-    <string name="onboarding_share_body">Instagram-ში, TikTok-ში, YouTube-სა თუ Chrome-ში დააჭირე Share-ს და აირჩიე SocialSave.</string>
+    <string name="onboarding_share_body">• დააჭირე Share-ს და აირჩიე SocialSave ან პირდაპირ შენი კატეგორია\n• დააკოპირე ლინკი და გახსენი SocialSave: შეგეკითხება, შეინახოს თუ არა\n• ან დააჭირე „+“-ს და ჩასვი ლინკი</string>
     <string name="onboarding_share_hint">Share → SocialSave</string>
     <string name="onboarding_share_title">შეინახე ნებისმიერი აპიდან</string>
     <string name="onboarding_skip">გამოტოვება</string>
@@ -129,7 +117,6 @@
     <string name="settings_appearance">გარეგნობა</string>
     <string name="settings_build">აგება</string>
     <string name="settings_how_to_save">როგორ შევინახო პოსტები</string>
-    <string name="settings_one_tap_save">ერთი შეხებით შენახვა</string>
     <string name="settings_privacy">კონფიდენციალურობა</string>
     <string name="settings_privacy_choices">კონფიდენციალურობის არჩევანი</string>
     <string name="settings_reminders">შეხსენებები</string>
@@ -141,11 +128,7 @@
     <string name="settings_reminders_toggle">კვირის შეხსენება</string>
     <string name="settings_terms">გამოყენების პირობები</string>
     <string name="settings_version">ვერსია</string>
-    <string name="share_already">უკვე შენახულია</string>
-    <string name="share_close">დახურვა</string>
     <string name="share_failed">ლინკის შენახვა ვერ მოხერხდა</string>
-    <string name="share_saved">შენახულია</string>
-    <string name="share_saving">ინახება</string>
     <string name="success_subtitle">კონტენტი შენახულია შენს ბიბლიოთეკაში.</string>
     <string name="success_title">შენახულია</string>
     <string name="success_view_saved">შენახულის ნახვა</string>
@@ -153,7 +136,6 @@
     <string name="tab_home">ბიბლიოთეკა</string>
     <string name="tab_saved">კატეგორიები</string>
     <string name="tab_settings">პარამეტრები</string>
-    <string name="tile_label">ლინკის შენახვა</string>
     <string name="time_days_ago">%d დღის წინ</string>
     <string name="time_hours_ago">%d სთ წინ</string>
     <string name="time_just_now">ახლახანს</string>
@@ -206,4 +188,7 @@
     <string name="detail_copy">კოპირება</string>
     <string name="selection_all">ყველა</string>
     <string name="selection_clear">მოხსნა</string>
+    <string name="clipboard_offer">დაკოპირებული ლინკი შევინახო?</string>
+    <string name="a11y_dismiss">დამალვა</string>
+    <string name="share_saved_to">შენახულია · %1$s</string>
 </resources>

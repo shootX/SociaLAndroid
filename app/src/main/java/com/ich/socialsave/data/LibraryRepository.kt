@@ -52,6 +52,8 @@ class LibraryRepository(
         val expanded = expander.expand(original)
         val finalCanonical = UrlNormalizer.canonicalUrl(expanded) ?: canonical
         val finalUrl = if (UrlNormalizer.canonicalize(expanded) != null) expanded else original
+        // The API refuses the whole sync batch for a longer link, which would stop every later sync.
+        if (finalUrl.length > MAX_URL) return SaveResult.InvalidUrl
         if (finalCanonical != canonical && posts.countCanonical(finalCanonical) > 0) {
             return SaveResult.AlreadyExists
         }
@@ -102,12 +104,12 @@ class LibraryRepository(
     }
 
     suspend fun setNotes(id: String, raw: String) {
-        posts.setNotes(id, raw.trim().ifEmpty { null }, clock())
+        posts.setNotes(id, raw.trim().clip(MAX_NOTE).ifEmpty { null }, clock())
         onChanged()
     }
 
     suspend fun createCategory(name: String, colorHex: String): Category {
-        val trimmed = name.trim()
+        val trimmed = name.trim().clip(MAX_NAME)
         val existing = categories.all()
         validate(trimmed, null, existing)
         val now = clock()
@@ -124,9 +126,11 @@ class LibraryRepository(
     }
 
     suspend fun updateCategory(category: Category, name: String, colorHex: String) {
-        val trimmed = name.trim()
+        val trimmed = name.trim().clip(MAX_NAME)
         validate(trimmed, category.id, categories.all())
-        categories.update(category.copy(name = trimmed, colorHex = colorHex).touched(clock()))
+        // The fresh row, not the copy the editor opened with: a sync may have changed its order meanwhile.
+        val current = categories.get(category.id) ?: return
+        categories.update(current.copy(name = trimmed, colorHex = colorHex).touched(clock()))
         onChanged()
     }
 
@@ -151,6 +155,16 @@ class LibraryRepository(
     }
 
     private fun Category.touched(now: Long) = copy(updatedAt = maxOf(now, updatedAt + 1), dirty = true)
+
+    /** At most [max] characters, without splitting an emoji's surrogate pair. */
+    private fun String.clip(max: Int): String = if (length <= max) this else take(max).dropLastWhile(Char::isHighSurrogate)
+
+    // The API's limits (SyncRequest): one longer value makes it refuse the whole sync request.
+    private companion object {
+        const val MAX_URL = 2048
+        const val MAX_NOTE = 10_000
+        const val MAX_NAME = 255
+    }
 
     private fun validate(name: String, excludingId: String?, existing: List<Category>) {
         if (name.isEmpty()) throw CategoryError.EmptyName

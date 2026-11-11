@@ -7,6 +7,7 @@ import com.ich.socialsave.data.DeletedCategory
 import com.ich.socialsave.data.DeletedPost
 import com.ich.socialsave.data.SavedPost
 import com.ich.socialsave.data.ThumbnailStore
+import java.util.UUID
 
 /** [SyncLocalStore] on the app's Room database, plus the local wipe used by sign-out and account deletion. */
 class RoomSyncStore(private val db: AppDatabase, private val thumbnails: ThumbnailStore) : SyncLocalStore {
@@ -50,6 +51,28 @@ class RoomSyncStore(private val db: AppDatabase, private val thumbnails: Thumbna
     suspend fun markAllDirty() = db.withTransaction {
         posts.markAllDirty()
         categories.markAllDirty()
+    }
+
+    /**
+     * Another account signs in over an expired one: the server refuses ids owned by the old account (it lists
+     * them in `rejected`), so every post and category gets a new id and is uploaded to the new account.
+     * Old tombstones belong to the old account and are dropped. Thumbnail files are kept; only ids change.
+     */
+    suspend fun reassignIds() = db.withTransaction {
+        val oldCategories = categories.all()
+        val oldPosts = posts.all()
+        val newCategoryIds = oldCategories.associate { it.id to UUID.randomUUID().toString() }
+        // Delete first: the canonical URL index is unique, so the copies can't sit next to the originals.
+        posts.deleteAll()
+        categories.deleteAll()
+        tombstones.clearPosts()
+        tombstones.clearCategories()
+        oldCategories.forEach { categories.insert(it.copy(id = newCategoryIds.getValue(it.id), dirty = true)) }
+        oldPosts.forEach {
+            posts.insert(
+                it.copy(id = UUID.randomUUID().toString(), categoryId = it.categoryId?.let(newCategoryIds::get), dirty = true),
+            )
+        }
     }
 
     /** Sign-out and account deletion: posts, categories, tombstones and thumbnail files. */

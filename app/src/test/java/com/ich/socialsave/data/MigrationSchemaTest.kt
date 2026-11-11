@@ -8,7 +8,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * There is no Robolectric/instrumented setup, so the v1 → v2 migration is checked against the schemas Room
+ * The v1 → v2 migration is checked against the schemas Room
  * exported: applying the migration's statements to the v1 schema must give exactly the v2 schema.
  */
 class MigrationSchemaTest {

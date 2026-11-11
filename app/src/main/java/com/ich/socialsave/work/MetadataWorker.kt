@@ -25,8 +25,6 @@ import kotlinx.coroutines.sync.withPermit
 
 /** Fetches titles and preview images for posts that don't have one yet, three at a time. */
 class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-    private val fetcher = LinkMetadataFetcher(imageConverter = { ThumbnailStore.jpegThumbnail(it) })
-
     override suspend fun doWork(): Result {
         val container = applicationContext.container
         val dao = container.database.posts()
@@ -35,7 +33,7 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
         // New links may arrive while we work, so keep going until a pass finds nothing new.
         while (true) {
-            val batch = dao.needingMetadata().filter { it.id !in tried }
+            val batch = dao.needingMetadata(System.currentTimeMillis()).filter { it.id !in tried }
             if (batch.isEmpty()) break
             tried += batch.map { it.id }
             val gate = Semaphore(MAX_CONCURRENT)
@@ -120,6 +118,9 @@ class MetadataWorker(context: Context, params: WorkerParameters) : CoroutineWork
         private const val UNIQUE_NAME = "metadata"
         private const val MAX_CONCURRENT = 3
         private const val MAX_ATTEMPTS = 3
+
+        // One fetcher (and its HTTP connection pool) per process, not a new one for every run.
+        private val fetcher = LinkMetadataFetcher(imageConverter = { ThumbnailStore.jpegThumbnail(it) })
 
         fun enqueue(context: Context) {
             val request = OneTimeWorkRequestBuilder<MetadataWorker>()

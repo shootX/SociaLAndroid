@@ -19,7 +19,7 @@ addition is AdMob native ads in the library grid.
 | Titles and thumbnails fetched on device (oEmbed, Open Graph, Instagram embed) | `core/LinkMetadataFetcher` + `MetadataWorker` |
 | Weekly reminder notification | `ReminderScheduler` (WorkManager) |
 | Rediscover widget (small + medium) | `RediscoverWidget` (Glance) |
-| One-Tap Save (Back Tap / Action Button / Siri) | Quick Settings tile + "Save Copied Link" launcher shortcut |
+| One-Tap Save (Back Tap / Action Button / Siri) | Share saves at once (toast, no sheet); categories as share-sheet shortcuts; "Save the copied link?" offer in the library |
 | Onboarding, appearance (system/light/dark), EN / KA / RU | same |
 
 Strings in `app/src/main/res/values*/strings.xml` were generated from the iOS `Localizable.xcstrings`.

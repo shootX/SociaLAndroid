@@ -1,87 +1,41 @@
 package com.ich.socialsave.share
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.content.pm.ShortcutManagerCompat
 import com.ich.socialsave.R
 import com.ich.socialsave.container
 import com.ich.socialsave.core.UrlNormalizer
+import com.ich.socialsave.data.AppLocale
 import com.ich.socialsave.data.SaveResult
-import com.ich.socialsave.ui.components.PrimaryButton
-import com.ich.socialsave.ui.theme.Brand
-import com.ich.socialsave.ui.theme.SocialSaveTheme
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-/** Receives "Share → SocialSave" from other apps, saves the link and closes itself. */
+/**
+ * "Share → SocialSave", or one of the category shortcuts in the share sheet ([ShareShortcuts]): saves the link in
+ * the background, says how it went in a toast and closes at once, so the person stays in the app they shared from.
+ */
 class ShareReceiverActivity : ComponentActivity() {
+    // Activities don't inherit the Application's context, so the in-app language must be applied here too.
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val container = this.container
-        val link = sharedLink(intent)
-        // Saving runs in the app scope so it finishes even if the sheet is dismissed early.
-        val pending = link?.let {
-            container.scope.async {
-                container.repository.saveLink(it).also { result ->
-                    // Contract trigger: a share-sheet save syncs without waiting for the app to open.
-                    if (result is SaveResult.Saved) container.sync.requestSync()
-                }
+        if (savedInstanceState == null) {
+            val link = sharedLink(intent)
+            if (link == null) {
+                toast(this, getString(R.string.share_failed))
+            } else {
+                saveLinkInBackground(this, link, ShareShortcuts.categoryId(intent.getStringExtra(ShortcutManagerCompat.EXTRA_SHORTCUT_ID)))
             }
         }
-
-        setContent {
-            val appearance by container.settings.appearance.collectAsStateWithLifecycle()
-            SocialSaveTheme(appearance) {
-                var result by remember { mutableStateOf<SaveResult?>(if (link == null) SaveResult.InvalidUrl else null) }
-                LaunchedEffect(Unit) {
-                    if (pending != null) result = pending.await()
-                }
-                LaunchedEffect(result) {
-                    if (result is SaveResult.Saved || result == SaveResult.AlreadyExists) {
-                        delay(650)
-                        finish()
-                    }
-                }
-                ShareSheet(result, onClose = { finish() })
-            }
-        }
+        finish()
     }
 
     private fun sharedLink(intent: Intent?): String? {
@@ -95,44 +49,26 @@ class ShareReceiverActivity : ComponentActivity() {
     }
 }
 
-@Composable
-private fun ShareSheet(result: SaveResult?, onClose: () -> Unit) {
-    val c = Brand.colors
-    Box(
-        Modifier.fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.25f))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClose),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Column(
-            Modifier.navigationBarsPadding().padding(16.dp).widthIn(max = 420.dp).fillMaxWidth()
-                .background(c.canvas, RoundedCornerShape(24.dp))
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Box(
-                Modifier.size(56.dp).background(if (result is SaveResult.Saved) c.mint else c.muted, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                when (result) {
-                    null -> CircularProgressIndicator(color = c.accent, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
-                    is SaveResult.Saved -> Icon(Icons.Filled.Check, null, tint = c.onMint)
-                    SaveResult.AlreadyExists -> Icon(Icons.Filled.Bookmark, null, tint = c.ink)
-                    else -> Icon(Icons.Filled.ErrorOutline, null, tint = c.danger)
-                }
+/**
+ * Saves [link] in the app scope, so it finishes after the caller is gone (a short link can take seconds to
+ * expand), then reports the result in a toast. Used by Share and by the library's copied-link offer.
+ */
+fun saveLinkInBackground(context: Context, link: String, categoryId: String? = null) {
+    val app = context.applicationContext
+    val container = app.container
+    container.scope.launch {
+        val message = when (container.repository.saveLink(link, categoryId)) {
+            is SaveResult.Saved -> {
+                container.sync.requestSync()
+                val category = categoryId?.let { container.database.categories().get(it)?.name }
+                if (category != null) app.getString(R.string.share_saved_to, category) else app.getString(R.string.intent_save_copied_saved)
             }
-            val title = when (result) {
-                null -> stringResource(R.string.share_saving)
-                is SaveResult.Saved -> stringResource(R.string.share_saved)
-                SaveResult.AlreadyExists -> stringResource(R.string.share_already)
-                else -> stringResource(R.string.share_failed)
-            }
-            Text(title, color = c.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-            if (result == SaveResult.InvalidUrl || result == SaveResult.Failure) {
-                PrimaryButton(stringResource(R.string.share_close), onClick = onClose)
-            }
+            SaveResult.AlreadyExists -> app.getString(R.string.intent_save_copied_already)
+            SaveResult.InvalidUrl -> app.getString(R.string.share_failed)
+            SaveResult.Failure -> app.getString(R.string.intent_save_copied_failed)
         }
+        withContext(Dispatchers.Main) { toast(app, message) }
     }
 }
+
+fun toast(context: Context, message: String) = Toast.makeText(context, message, Toast.LENGTH_SHORT).show()

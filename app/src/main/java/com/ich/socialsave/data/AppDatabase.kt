@@ -40,11 +40,14 @@ interface PostDao {
     @Query("SELECT * FROM saved_posts WHERE canonicalUrl = :canonical LIMIT 1")
     suspend fun byCanonical(canonical: String): SavedPost?
 
+    /** A failed post waits 6 h after its first failure and 12 h after its second, so a site's brief block can't use up all 3 tries. */
     @Query(
         "SELECT * FROM saved_posts WHERE thumbnailFile IS NULL AND metadataAttempts < 3 " +
-            "AND metadataStatus != 'UNAVAILABLE' ORDER BY createdAt DESC",
+            "AND metadataStatus != 'UNAVAILABLE' " +
+            "AND (metadataStatus != 'FAILED' OR IFNULL(metadataUpdatedAt, 0) <= :now - metadataAttempts * 21600000) " +
+            "ORDER BY createdAt DESC",
     )
-    suspend fun needingMetadata(): List<SavedPost>
+    suspend fun needingMetadata(now: Long): List<SavedPost>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(post: SavedPost): Long

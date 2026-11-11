@@ -53,16 +53,6 @@
     <string name="filter_all_categories">Все категории</string>
     <string name="filter_category">Категория</string>
     <string name="filter_title">Фильтр</string>
-    <string name="guide_headline">Сохраняйте одним касанием</string>
-    <string name="guide_shortcut_body">Нажмите и удерживайте значок SocialSave и выберите «Сохранить скопированную ссылку». Перетащите ярлык на главный экран, чтобы сохранять одним касанием.</string>
-    <string name="guide_shortcut_title">Ярлык на значке приложения</string>
-    <string name="guide_subtitle">Скопируйте ссылку в Instagram, TikTok или любом другом приложении, затем нажмите плитку SocialSave в быстрых настройках. Ссылка сохранится без открытия приложения.</string>
-    <string name="guide_tile_add">Добавить плитку</string>
-    <string name="guide_tile_step1">Дважды проведите вниз от верхнего края экрана.</string>
-    <string name="guide_tile_step2">Нажмите на значок карандаша (Изменить).</string>
-    <string name="guide_tile_step3">Перетащите «Сохранить ссылку» к своим плиткам.</string>
-    <string name="guide_tile_title">Плитка быстрых настроек</string>
-    <string name="guide_title">Одним касанием</string>
     <string name="home_category_empty_subtitle">Выберите другую категорию или сбросьте фильтр.</string>
     <string name="home_category_empty_title">В этой категории пока ничего нет</string>
     <string name="home_empty_subtitle">Сохраняйте из Instagram, TikTok, Facebook или вставьте ссылку.</string>
@@ -71,8 +61,6 @@
     <string name="intent_save_copied_failed">Не удалось сохранить ссылку. Попробуйте ещё раз.</string>
     <string name="intent_save_copied_no_link">В буфере обмена нет ссылки. Сначала скопируйте ссылку.</string>
     <string name="intent_save_copied_saved">Сохранено в SocialSave</string>
-    <string name="intent_save_copied_short">Сохранить ссылку</string>
-    <string name="intent_save_copied_title">Сохранить скопированную ссылку</string>
     <string name="library_delete_many_confirm">Удалить ссылки: %d?</string>
     <string name="library_favorites">Избранное</string>
     <string name="library_favorites_empty_subtitle">Откройте пост и нажмите «Добавить в избранное».</string>
@@ -86,7 +74,7 @@
     <string name="onboarding_remind_body">Раз в неделю SocialSave напомнит, что вы сохранили, чтобы находки не терялись.</string>
     <string name="onboarding_remind_sample">На этой неделе вы сохранили 5 постов. Взгляните: «Паста за 15 минут»</string>
     <string name="onboarding_remind_title">Возвращайтесь к сохраненному</string>
-    <string name="onboarding_share_body">В Instagram, TikTok, YouTube или Chrome нажмите «Поделиться» и выберите SocialSave.</string>
+    <string name="onboarding_share_body">• Нажмите «Поделиться» и выберите SocialSave или сразу свою категорию\n• Скопируйте ссылку и откройте SocialSave: он предложит её сохранить\n• Или нажмите «+» и вставьте ссылку</string>
     <string name="onboarding_share_hint">Поделиться → SocialSave</string>
     <string name="onboarding_share_title">Сохраняйте из любого приложения</string>
     <string name="onboarding_skip">Пропустить</string>
@@ -129,7 +117,6 @@
     <string name="settings_appearance">Оформление</string>
     <string name="settings_build">Сборка</string>
     <string name="settings_how_to_save">Как сохранять посты</string>
-    <string name="settings_one_tap_save">Сохранение одним касанием</string>
     <string name="settings_privacy">Конфиденциальность</string>
     <string name="settings_privacy_choices">Настройки конфиденциальности</string>
     <string name="settings_reminders">Напоминания</string>
@@ -141,11 +128,7 @@
     <string name="settings_reminders_toggle">Еженедельное напоминание</string>
     <string name="settings_terms">Условия использования</string>
     <string name="settings_version">Версия</string>
-    <string name="share_already">Уже сохранено</string>
-    <string name="share_close">Закрыть</string>
     <string name="share_failed">Не удалось сохранить ссылку</string>
-    <string name="share_saved">Сохранено</string>
-    <string name="share_saving">Сохранение</string>
     <string name="success_subtitle">Контент сохранён в библиотеке.</string>
     <string name="success_title">Сохранено</string>
     <string name="success_view_saved">К сохранённым</string>
@@ -153,7 +136,6 @@
     <string name="tab_home">Библиотека</string>
     <string name="tab_saved">Категории</string>
     <string name="tab_settings">Настройки</string>
-    <string name="tile_label">Сохранить ссылку</string>
     <string name="time_days_ago">%d дн. назад</string>
     <string name="time_hours_ago">%d ч назад</string>
     <string name="time_just_now">Только что</string>
@@ -206,4 +188,7 @@
     <string name="detail_copy">Копировать</string>
     <string name="selection_all">Все</string>
     <string name="selection_clear">Снять</string>
+    <string name="clipboard_offer">Сохранить скопированную ссылку?</string>
+    <string name="a11y_dismiss">Скрыть</string>
+    <string name="share_saved_to">Сохранено: %1$s</string>
 </resources>

@@ -68,6 +68,7 @@ import com.ich.socialsave.R
 import com.ich.socialsave.ads.NativeAdCard
 import com.ich.socialsave.ads.NativeAdsController
 import com.ich.socialsave.container
+import com.ich.socialsave.share.CopiedLink
 import com.ich.socialsave.data.Category
 import com.ich.socialsave.data.SavedPost
 import com.ich.socialsave.ui.theme.Brand
@@ -374,6 +375,7 @@ fun openLink(context: Context, url: String) {
 fun copyLink(context: Context, url: String) {
     val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
     clipboard.setPrimaryClip(ClipData.newPlainText("link", url))
+    CopiedLink.markCurrentHandled(context)
 }
 
 fun shareTextIntent(context: Context, text: String) {

@@ -39,7 +39,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ich.socialsave.R
 import com.ich.socialsave.container
 import com.ich.socialsave.core.UrlNormalizer
+import com.ich.socialsave.share.CopiedLink
 import com.ich.socialsave.data.SaveResult
 import com.ich.socialsave.ui.components.AccentHeadline
 import com.ich.socialsave.ui.components.FieldDivider
@@ -68,6 +68,7 @@ import com.ich.socialsave.ui.components.PrimaryButton
 import com.ich.socialsave.ui.components.SectionLabel
 import com.ich.socialsave.ui.components.archiveField
 import com.ich.socialsave.ui.theme.Brand
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,7 +77,7 @@ fun PasteLinkSheet(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val repository = context.container.repository
     val categories by remember { repository.observeCategories() }.collectAsStateWithLifecycle(initialValue = emptyList())
-    val scope = rememberCoroutineScope()
+    val container = context.container
     val c = Brand.colors
 
     var url by remember { mutableStateOf("") }
@@ -90,13 +91,17 @@ fun PasteLinkSheet(onDismiss: () -> Unit) {
         // Prefill when the clipboard holds a web link (Android only lets a focused app read it).
         val clip = context.getSystemService(ClipboardManager::class.java)?.primaryClip
         val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString()
-        UrlNormalizer.firstHttpUrl(text.orEmpty())?.let { url = it }
+        UrlNormalizer.firstHttpUrl(text.orEmpty())?.let {
+            url = it
+            CopiedLink.markCurrentHandled(context)
+        }
     }
 
     fun save() {
         if (url.isBlank() || saving) return
         saving = true
-        scope.launch {
+        // App scope: a link that is still expanding (up to 4 s) is saved even if the sheet is swiped away.
+        container.scope.launch(Dispatchers.Main) {
             when (repository.saveLink(url, categoryId)) {
                 is SaveResult.Saved -> saved = true
                 SaveResult.AlreadyExists -> error = context.getString(R.string.error_already_saved)

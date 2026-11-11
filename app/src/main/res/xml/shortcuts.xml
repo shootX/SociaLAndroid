@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The categories are published as sharing shortcuts in this category (share/ShareShortcuts.kt). -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
-    <shortcut
-        android:enabled="true"
-        android:icon="@drawable/ic_shortcut_save"
-        android:shortcutId="save_copied_link"
-        android:shortcutLongLabel="@string/intent_save_copied_title"
-        android:shortcutShortLabel="@string/intent_save_copied_short">
-        <intent
-            android:action="com.ich.socialsave.SAVE_COPIED_LINK"
-            android:targetClass="com.ich.socialsave.share.ClipboardSaveActivity"
-            android:targetPackage="com.ich.socialsave" />
-    </shortcut>
+    <share-target android:targetClass="com.ich.socialsave.share.ShareReceiverActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="com.ich.socialsave.category.SAVE_TO_CATEGORY" />
+    </share-target>
 </shortcuts>

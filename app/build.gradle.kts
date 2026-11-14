@@ -53,6 +53,14 @@ android {
     }
 
     signingConfigs {
+        // Committed debug key (not a secret): CI runners would otherwise sign each build with a new
+        // random key, whose SHA-1 no Google/Facebook console entry can match, so sign-in fails.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (keystoreProperties.isNotEmpty()) {
             create("release") {
                 storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))

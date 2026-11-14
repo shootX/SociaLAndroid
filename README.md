@@ -48,7 +48,12 @@ Values are read from a Gradle property (`-P`, `~/.gradle/gradle.properties`) or 
 | `API_BASE_URL` | Optional; the sync API, default `https://socialsave.cc/api/v1` |
 | `GOOGLE_SERVER_CLIENT_ID` | Optional; the Google **web** OAuth client the API accepts as `aud` (a default is built in) |
 
-Provider setup outside the code:
+Provider setup outside the code. Debug builds (local and CI) are all signed with the committed
+`app/debug.keystore`, so they share one fingerprint:
+
+* SHA-1: `CA:32:FC:A6:31:5D:96:F0:73:DA:21:71:DC:49:12:15:8D:F3:2E:BE`
+* Facebook key hash: `yjL8pjFdlvBz2iFx3EkSFY3zLr4=`
+
 
 * **Google:** in the same Google Cloud project as the web client, create an **Android** OAuth client for
   package `com.ich.socialsave` with the SHA-1 of every signing key in use: the debug keystore, the

@@ -25,13 +25,15 @@ android {
         applicationId = "com.ich.socialsave"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.3.0"
 
-        val admobAppId = config("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713"
+        val admobAppId = config("ADMOB_APP_ID") ?: "ca-app-pub-8187327714952754~2169834812"
         val admobNativeId = config("ADMOB_NATIVE_ID") ?: "ca-app-pub-3940256099942544/2247696110"
+        val admobBannerId = config("ADMOB_BANNER_ID") ?: "ca-app-pub-8187327714952754/5931618876"
         manifestPlaceholders["admobAppId"] = admobAppId
         buildConfigField("String", "ADMOB_NATIVE_ID", "\"$admobNativeId\"")
+        buildConfigField("String", "ADMOB_BANNER_ID", "\"$admobBannerId\"")
         buildConfigField("String", "WEBSITE_URL", "\"https://socialsave.cc\"")
 
         // Accounts and sync. The Google id is the web/server OAuth client the API accepts as `aud`;
@@ -67,6 +69,7 @@ android {
         debug {
             // Always Google's test ads while developing, whatever ids are configured.
             buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3940256099942544/2247696110\"")
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
         }
         release {

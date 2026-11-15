@@ -4,7 +4,7 @@ Kotlin + Jetpack Compose version of the SocialSave iOS app (`shootX/SociaLIOS`).
 library of links saved from Instagram, TikTok, YouTube, Facebook, X, Threads, Pinterest, Reddit and the web.
 Signing in is optional: with Apple, Google or Facebook the library syncs through the SocialSave API
 (`SociaLAPI`) between phones, iPhone included. Without an account everything stays on the device. The one
-addition is AdMob native ads in the library grid.
+addition is AdMob ads: native ads in the library grid and a banner above the tab bar.
 
 ## Features (parity with iOS)
 
@@ -28,11 +28,34 @@ Strings in `app/src/main/res/values*/strings.xml` were generated from the iOS `L
 
 * Native ads appear in the library and collection grids after every 10th post, drawn like a post card
   with an "Ad" badge (`ads/NativeAdCard.kt`, `ads/NativeAdsController.kt`).
+* An anchored adaptive banner (large size) sits above the tab bar on the Library, Categories and Settings tabs
+  (`ads/BannerAd.kt`). It is part of the bottom bar, so the screens are padded past it and it never covers
+  content; it hides with the tab bar (post and category screens, multi-select) and keeps the same ad when the
+  tab bar returns. It takes no space until consent allows ads, and none if no ad could be loaded.
 * Consent: Google UMP asks users in the EEA/UK before any ad is requested; Settings shows
-  "Privacy Choices" when the user is required to be able to change it.
-* **Debug builds always use Google's test ids.** Release builds read the real ids from
-  `ADMOB_APP_ID` / `ADMOB_NATIVE_ID` (Gradle property or environment variable, e.g. GitHub Actions secrets),
-  and fall back to the test ids if they are missing.
+  "Privacy Choices" when the user is required to be able to change it. The Mobile Ads SDK starts once,
+  after consent allows it.
+* **Debug builds always use Google's test ids.** Release builds use the production app id and banner id
+  (overridable with `ADMOB_APP_ID` / `ADMOB_BANNER_ID`) and read the native unit from `ADMOB_NATIVE_ID`
+  (Gradle property or environment variable, e.g. GitHub Actions secrets), falling back to Google's test
+  native unit if it is missing.
+
+### Play Console: ads and Data safety
+
+The app declares `com.google.android.gms.permission.AD_ID` and collects the Advertising ID for ads.
+Answer the Play Console forms like this (from Google's disclosure for Mobile Ads SDK 25.5.0,
+developers.google.com/admob/android/privacy/play-data-disclosure; you are responsible for the final answers):
+
+* **App content → Ads:** contains ads.
+* **App content → Advertising ID:** uses the Advertising ID, for advertising or marketing (plus analytics and
+  fraud prevention, security and compliance).
+* **Data safety:** the Google Mobile Ads SDK collects **and shares** the following data with Google. Purposes:
+  advertising or marketing, analytics, fraud prevention, security and compliance. Not processed ephemerally.
+  Encrypted in transit (TLS).
+  * Device or other IDs: Android advertising ID, app set ID
+  * Location → Approximate location: estimated from the IP address
+  * App activity → App interactions: app launches, taps, video views
+  * App info and performance → Diagnostics: launch time, hang rate, energy use
 
 ## Configuration
 
@@ -41,8 +64,9 @@ Values are read from a Gradle property (`-P`, `~/.gradle/gradle.properties`) or 
 
 | Name | Used for |
 | --- | --- |
-| `ADMOB_APP_ID` | AdMob app id (release only; debug and missing values use Google's test ids) |
-| `ADMOB_NATIVE_ID` | AdMob native ad unit id (release only, same fallback) |
+| `ADMOB_APP_ID` | AdMob app id (release only; default is the production id, debug always uses Google's test id) |
+| `ADMOB_BANNER_ID` | AdMob banner ad unit id (release only; default is the production id, debug always uses Google's test id) |
+| `ADMOB_NATIVE_ID` | AdMob native ad unit id (release only; falls back to Google's test id when missing) |
 | `FACEBOOK_APP_ID` | Facebook Login app id; the Facebook button is hidden while this or the token is empty |
 | `FACEBOOK_CLIENT_TOKEN` | Facebook client token (App settings → Advanced) |
 | `API_BASE_URL` | Optional; the sync API, default `https://socialsave.cc/api/v1` |

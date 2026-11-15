@@ -65,6 +65,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ich.socialsave.R
+import com.ich.socialsave.ads.BannerAd
+import com.ich.socialsave.ads.rememberBannerAdState
 import com.ich.socialsave.container
 import com.ich.socialsave.ui.collections.CollectionDetailScreen
 import com.ich.socialsave.ui.collections.CollectionKind
@@ -153,6 +155,7 @@ private fun AppRoot(pendingPostId: String?, onPendingHandled: () -> Unit) {
     val route = backStack?.destination?.route
     val showTabs = route in tabs.map { it.route } && !selecting
     val brand = LocalBrand.current
+    val banner = rememberBannerAdState()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         MetadataWorker.enqueue(context)
@@ -174,7 +177,11 @@ private fun AppRoot(pendingPostId: String?, onPendingHandled: () -> Unit) {
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 AnimatedVisibility(showTabs, enter = fadeIn(), exit = fadeOut()) {
-                    BottomBar(route, onSelect = nav::switchTab)
+                    // The banner sits above the tab bar inside the bottom bar, so the screens are padded past it.
+                    Column {
+                        if (banner != null && onboardingDone) BannerAd(banner)
+                        BottomBar(route, onSelect = nav::switchTab)
+                    }
                 }
             },
         ) { padding ->

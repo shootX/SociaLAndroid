@@ -12,5 +12,7 @@
 .cxx/
 *.keystore
 *.jks
+# Shared debug key: one fixed SHA-1 / key hash for Google and Facebook sign-in in every debug build.
+!/app/debug.keystore
 keystore.properties
 .kotlin/

@@ -38,6 +38,13 @@ jobs:
           FACEBOOK_CLIENT_TOKEN: ${{ secrets.FACEBOOK_CLIENT_TOKEN }}
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleRelease
 
+      # Google and Facebook sign-in are registered for this SHA-1 only (README → Provider setup).
+      - name: Debug APK carries the registered signing key
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
+          "$apksigner" verify --print-certs app/build/outputs/apk/debug/*.apk \
+            | grep -q "SHA-1 digest: ca32fca6315d96f073da2171dc4912158df32ebe"
+
       - name: Lint (report only)
         run: ./gradlew --no-daemon :app:lintDebug
         continue-on-error: true
